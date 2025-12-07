@@ -1,0 +1,164 @@
+@page "/timeline"
+@using global::Cookbook.Platform.Shared.Messaging
+@inject SignalRClientService SignalRClient
+@rendermode InteractiveServer
+
+<PageTitle>Event Timeline</PageTitle>
+
+<header class="qg-page-header">
+    <h1 class="qg-page-title">Event Timeline</h1>
+    <p class="qg-page-subtitle">
+        Real-time view of agent events and system activity
+    </p>
+</header>
+
+<div class="page-grid">
+    <div>
+        <div class="qg-card">
+            <div class="qg-section-header qg-flex qg-items-center qg-justify-between">
+                <h3 class="qg-section-title" style="margin: 0;">Recent Events</h3>
+                <button class="qg-btn qg-btn-sm qg-btn-ghost" @onclick="ClearEvents">
+                    Clear
+                </button>
+            </div>
+            
+            <div style="max-height: 600px; overflow-y: auto;">
+                @if (events.Any())
+                {
+                    <div class="timeline">
+                        @foreach (var evt in events)
+                        {
+                            <div class="timeline-item">
+                                <div class="timeline-icon">
+                                    <span class="qg-badge @GetEventBadgeClass(evt.Type)">
+                                        @GetEventIcon(evt.Type)
+                                    </span>
+                                </div>
+                                <div class="timeline-content">
+                                    <div class="timeline-header">
+                                        <span class="timeline-type">@evt.Type</span>
+                                        <span class="timeline-time">@evt.Timestamp.ToLocalTime().ToString("HH:mm:ss")</span>
+                                    </div>
+                                    <pre class="timeline-payload">@FormatPayload(evt.Payload)</pre>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="stream-empty">
+                        No events yet. Start a recipe search to see real-time events.
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <div>
+        <div class="status-card">
+            <div class="status-header">Connection Status</div>
+            <div class="status-body">
+                <div class="status-indicator">
+                    <span class="status-dot @(isConnected ? "connected" : "disconnected")"></span>
+                    <span class="status-text">@(isConnected ? "Connected" : "Disconnected")</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="status-card">
+            <div class="status-header">Event Statistics</div>
+            <div class="status-body">
+                <ul class="stats-list">
+                    <li class="stats-item">
+                        <span class="stats-label">Total Events</span>
+                        <span class="stats-value">@events.Count</span>
+                    </li>
+                    @foreach (var group in events.GroupBy(e => e.Type).Take(5))
+                    {
+                        <li class="stats-item">
+                            <span class="stats-label">@group.Key</span>
+                            <span class="stats-value">@group.Count()</span>
+                        </li>
+                    }
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private List<StreamEvent> events = new();
+    private bool isConnected = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await SignalRClient.ConnectAsync();
+        isConnected = SignalRClient.IsConnected;
+        SignalRClient.OnEvent += HandleEvent;
+    }
+
+    private void HandleEvent(AgentEvent agentEvent)
+    {
+        events.Insert(0, new StreamEvent
+        {
+            Type = agentEvent.EventType,
+            Payload = agentEvent.Payload,
+            Timestamp = agentEvent.Timestamp
+        });
+
+        // Keep only last 100 events
+        if (events.Count > 100)
+        {
+            events = events.Take(100).ToList();
+        }
+
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void ClearEvents()
+    {
+        events.Clear();
+    }
+
+    private string GetEventBadgeClass(string eventType) => eventType switch
+    {
+        var t when t.Contains("completed") => "qg-badge-success",
+        var t when t.Contains("failed") => "qg-badge-error",
+        var t when t.Contains("progress") => "qg-badge-info",
+        var t when t.Contains("started") => "qg-badge-info",
+        _ => "qg-badge-neutral"
+    };
+
+    private string GetEventIcon(string eventType) => eventType switch
+    {
+        var t when t.Contains("completed") => "?",
+        var t when t.Contains("failed") => "?",
+        var t when t.Contains("progress") => "?",
+        var t when t.Contains("started") => "?",
+        var t when t.Contains("research") => "??",
+        var t when t.Contains("analysis") => "??",
+        _ => "•"
+    };
+
+    private string FormatPayload(string payload)
+    {
+        try
+        {
+            var doc = System.Text.Json.JsonDocument.Parse(payload);
+            return System.Text.Json.JsonSerializer.Serialize(doc, new System.Text.Json.JsonSerializerOptions 
+            { 
+                WriteIndented = true 
+            });
+        }
+        catch
+        {
+            return payload;
+        }
+    }
+
+    public void Dispose()
+    {
+        SignalRClient.OnEvent -= HandleEvent;
+    }
+}

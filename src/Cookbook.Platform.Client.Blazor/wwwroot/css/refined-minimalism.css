@@ -1,0 +1,1212 @@
+/**
+ * QuickGrid Refined Minimalism - Global Design System
+ * 
+ * A production-grade minimalist design foundation for technical documentation
+ * and data-focused interfaces. Emphasizes precision, restraint, and subtle sophistication.
+ * 
+ * Philosophy:
+ * - Every element must earn its place
+ * - Whitespace creates hierarchy and focus
+ * - Subtle details discovered, not announced
+ * - Mathematical precision in spacing and typography
+ */
+
+/* ============================================================================
+   CSS CUSTOM PROPERTIES - DESIGN TOKENS
+   ========================================================================= */
+
+:root {
+  /* -------------------------------------------------------------------------
+     COLOR SYSTEM
+     Refined neutrals with temperature awareness, single accent color
+     ------------------------------------------------------------------------- */
+  
+  /* Base - Warm off-white for reduced eye strain */
+  --color-canvas: #FAFAF9;
+  --color-surface: #FFFFFF;
+  --color-surface-raised: #FEFEFE;
+  
+  /* Text - Near-black hierarchy, never pure black */
+  --color-text-primary: #1A1A1A;
+  --color-text-secondary: #525252;
+  --color-text-tertiary: #737373;
+  --color-text-disabled: #A3A3A3;
+  
+  /* Borders - Subtle, precise separation */
+  --color-border-subtle: #F5F5F4;
+  --color-border-default: #E7E5E4;
+  --color-border-emphasis: #D6D3D1;
+  --color-border-strong: #A8A29E;
+  
+  /* Accent - Single color used sparingly for emphasis */
+  --color-accent-primary: #2563EB;
+  --color-accent-primary-hover: #1D4ED8;
+  --color-accent-primary-subtle: #EFF6FF;
+  --color-accent-primary-muted: #DBEAFE;
+  
+  /* Semantic - Minimal, functional color usage */
+  --color-success: #059669;
+  --color-success-subtle: #F0FDF4;
+  --color-success-border: #D1FAE5;
+  
+  --color-warning: #D97706;
+  --color-warning-subtle: #FFFBEB;
+  --color-warning-border: #FED7AA;
+  
+  --color-error: #DC2626;
+  --color-error-subtle: #FEF2F2;
+  --color-error-border: #FECACA;
+  
+  --color-info: #0284C7;
+  --color-info-subtle: #F0F9FF;
+  --color-info-border: #BAE6FD;
+  
+  /* Code/Technical - Slightly different from text for distinction */
+  --color-code-bg: #F5F5F4;
+  --color-code-text: #292524;
+  --color-code-border: #E7E5E4;
+  
+  /* -------------------------------------------------------------------------
+     TYPOGRAPHY SYSTEM
+     Precise scale with deliberate weight hierarchy
+     ------------------------------------------------------------------------- */
+  
+  /* Font Families */
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'JetBrains Mono', 'SF Mono', 'Consolas', monospace;
+  
+  /* Font Sizes - Modular scale based on 16px */
+  --font-size-xs: 0.75rem;      /* 12px */
+  --font-size-sm: 0.875rem;     /* 14px */
+  --font-size-base: 1rem;       /* 16px */
+  --font-size-lg: 1.125rem;     /* 18px */
+  --font-size-xl: 1.25rem;      /* 20px */
+  --font-size-2xl: 1.5rem;      /* 24px */
+  --font-size-3xl: 1.875rem;    /* 30px */
+  --font-size-4xl: 2.25rem;     /* 36px */
+  
+  /* Font Weights - Strategic hierarchy */
+  --font-weight-light: 300;
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  
+  /* Line Heights - Optimized for readability */
+  --line-height-tight: 1.2;
+  --line-height-snug: 1.375;
+  --line-height-normal: 1.5;
+  --line-height-relaxed: 1.625;
+  
+  /* Letter Spacing - Subtle optical adjustments */
+  --letter-spacing-tight: -0.01em;
+  --letter-spacing-normal: 0;
+  --letter-spacing-wide: 0.02em;
+  --letter-spacing-wider: 0.05em;
+  
+  /* -------------------------------------------------------------------------
+     SPACING SYSTEM
+     8pt grid for mathematical precision
+     ------------------------------------------------------------------------- */
+  
+  --space-0: 0;
+  --space-1: 0.125rem;   /* 2px */
+  --space-2: 0.25rem;    /* 4px */
+  --space-3: 0.375rem;   /* 6px */
+  --space-4: 0.5rem;     /* 8px */
+  --space-6: 0.75rem;    /* 12px */
+  --space-8: 1rem;       /* 16px */
+  --space-10: 1.25rem;   /* 20px */
+  --space-12: 1.5rem;    /* 24px */
+  --space-16: 2rem;      /* 32px */
+  --space-20: 2.5rem;    /* 40px */
+  --space-24: 3rem;      /* 48px */
+  --space-32: 4rem;      /* 64px */
+  --space-40: 5rem;      /* 80px */
+  --space-48: 6rem;      /* 96px */
+  --space-64: 8rem;      /* 128px */
+  
+  /* -------------------------------------------------------------------------
+     LAYOUT & STRUCTURE
+     ------------------------------------------------------------------------- */
+  
+  --container-max-width: 1200px;
+  --container-padding: var(--space-16);
+  
+  --section-gap: var(--space-32);
+  --card-padding: var(--space-16);
+  --card-radius: 0.25rem;        /* 4px - subtle, not rounded */
+  
+  /* -------------------------------------------------------------------------
+     SHADOWS & ELEVATION
+     Minimal depth, subtle presence
+     ------------------------------------------------------------------------- */
+  
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06);
+  --shadow-md: 0 2px 6px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 4px 12px rgba(0, 0, 0, 0.10);
+  
+  /* Focus ring - accessible but refined */
+  --focus-ring: 0 0 0 3px var(--color-accent-primary-muted);
+  
+  /* -------------------------------------------------------------------------
+     MOTION & ANIMATION
+     Precise, intentional movement
+     ------------------------------------------------------------------------- */
+  
+  --duration-instant: 100ms;
+  --duration-fast: 150ms;
+  --duration-normal: 200ms;
+  --duration-slow: 300ms;
+  
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-out: cubic-bezier(0, 0, 0.2, 1);
+  --ease-in: cubic-bezier(0.4, 0, 1, 1);
+  
+  /* -------------------------------------------------------------------------
+     GRID & TABLE
+     Technical data display optimization
+     ------------------------------------------------------------------------- */
+  
+  --grid-header-height: 2.5rem;   /* 40px */
+  --grid-row-height: 2.25rem;     /* 36px */
+  --grid-cell-padding-x: var(--space-12);
+  --grid-cell-padding-y: var(--space-8);
+  /* Header left padding adjustment (difference between header and body left inset) */
+  --grid-header-left-adjust: var(--space-8); /* 1rem; tune if needed */
+}
+
+/* ============================================================================
+   BASE ELEMENT STYLES
+   Refined defaults that respect the design system
+   ========================================================================= */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 16px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: var(--font-sans);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-normal);
+  line-height: var(--line-height-normal);
+  color: var(--color-text-primary);
+  background-color: var(--color-canvas);
+}
+
+/* ============================================================================
+   TYPOGRAPHY ELEMENTS
+   Precise hierarchy through size, weight, and spacing
+   ========================================================================= */
+
+h1, h2, h3, h4, h5, h6 {
+  margin: 0;
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-tight);
+  letter-spacing: var(--letter-spacing-tight);
+  color: var(--color-text-primary);
+}
+
+h1 {
+  font-size: var(--font-size-4xl);
+  margin-bottom: var(--space-6);
+}
+
+h2 {
+  font-size: var(--font-size-3xl);
+  margin-bottom: var(--space-6);
+}
+
+h3 {
+  font-size: var(--font-size-2xl);
+  margin-bottom: var(--space-4);
+}
+
+h4 {
+  font-size: var(--font-size-xl);
+  margin-bottom: var(--space-4);
+}
+
+h5 {
+  font-size: var(--font-size-lg);
+  margin-bottom: var(--space-3);
+}
+
+h6 {
+  font-size: var(--font-size-base);
+  margin-bottom: var(--space-3);
+}
+
+p {
+  margin: 0 0 var(--space-12) 0;
+  color: var(--color-text-secondary);
+  line-height: var(--line-height-relaxed);
+}
+
+/* Code elements - Technical precision */
+code {
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+  padding: var(--space-1) var(--space-3);
+  background-color: var(--color-code-bg);
+  color: var(--color-code-text);
+  border-radius: 0.1875rem; /* 3px */
+  border: 1px solid var(--color-code-border);
+}
+
+pre {
+  margin: 0 0 var(--space-16) 0;
+  padding: var(--space-12);
+  background-color: var(--color-code-bg);
+  border: 1px solid var(--color-code-border);
+  border-radius: var(--card-radius);
+  overflow-x: auto;
+  font-family: var(--font-mono);
+  font-size: var(--font-size-sm);
+  line-height: var(--line-height-relaxed);
+}
+
+pre code {
+  padding: 0;
+  background: none;
+  border: none;
+}
+
+/* Lists - Refined spacing */
+ul, ol {
+  margin: 0 0 var(--space-12) 0;
+  padding-left: var(--space-20);
+}
+
+li {
+  margin-bottom: var(--space-4);
+  color: var(--color-text-secondary);
+  line-height: var(--line-height-relaxed);
+}
+
+/* ============================================================================
+   LAYOUT COMPONENTS
+   Container, section, and card primitives
+   ========================================================================= */
+
+.qg-container {
+  max-width: var(--container-max-width);
+  margin: 0 auto;
+  padding: var(--container-padding);
+}
+
+.qg-section {
+  margin-bottom: var(--section-gap);
+}
+
+.qg-card {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--card-radius);
+  padding: var(--card-padding);
+  box-shadow: var(--shadow-xs);
+}
+
+.qg-card-raised {
+  box-shadow: var(--shadow-sm);
+}
+
+/* ============================================================================
+   HEADER COMPONENTS
+   Page and section headers with precise hierarchy
+   ========================================================================= */
+
+.qg-page-header {
+  margin-bottom: var(--space-32);
+  padding: var(--space-20) 0;
+  border-bottom: 1px solid var(--color-border-subtle);
+}
+
+.qg-page-title {
+  font-size: var(--font-size-4xl);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: var(--letter-spacing-tight);
+  margin-bottom: var(--space-6);
+  color: var(--color-text-primary);
+}
+
+.qg-page-subtitle {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-normal);
+  color: var(--color-text-secondary);
+  line-height: var(--line-height-relaxed);
+  max-width: 48rem; /* 768px - optimal reading width */
+  margin: 0;
+}
+
+.qg-section-header {
+  margin-bottom: var(--space-16);
+  padding-bottom: var(--space-8);
+  border-bottom: 1px solid var(--color-border-default);
+}
+
+.qg-section-title {
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: var(--letter-spacing-tight);
+  margin-bottom: var(--space-3);
+  color: var(--color-text-primary);
+}
+
+.qg-section-description {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-tertiary);
+  line-height: var(--line-height-relaxed);
+  margin: 0;
+}
+
+/* ============================================================================
+   GRID / TABLE COMPONENTS
+   Optimized for data display with technical precision
+   ========================================================================= */
+
+.qg-grid-container {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--card-radius);
+  overflow: hidden;
+  box-shadow: var(--shadow-xs);
+}
+
+.qg-grid {
+  display: table; /* Ensure table semantics, avoids collision with utility grid class */
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--font-size-sm);
+  table-layout: fixed;
+}
+
+.qg-grid thead {
+  background-color: var(--color-canvas);
+  border-bottom: 1px solid var(--color-border-emphasis);
+}
+
+.qg-grid thead th {
+  /* Top Right Bottom Left (left reduced for alignment) */
+  padding: var(--grid-cell-padding-y) var(--grid-cell-padding-x) var(--grid-cell-padding-y) calc(var(--grid-cell-padding-x) - var(--grid-header-left-adjust));
+  text-align: left;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  letter-spacing: var(--letter-spacing-wide);
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+  height: var(--grid-header-height);
+  white-space: nowrap;
+}
+
+/* Reset and align interactive header content (sorting buttons/links) */
+.qg-grid thead th > button,
+.qg-grid thead th > a {
+  all: unset; /* remove UA padding, borders, etc. */
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start; /* flush-left */
+  gap: 0; /* eliminate extra horizontal offset */
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  text-align: left;
+}
+
+/* Remove any nested span/icon padding or margin that could shift start */
+.qg-grid thead th > button > *,
+.qg-grid thead th > a > * {
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.qg-grid tbody tr {
+  border-bottom: 1px solid var(--color-border-subtle);
+  transition: background-color var(--duration-fast) var(--ease-in-out);
+}
+
+.qg-grid tbody tr:hover {
+  background-color: var(--color-canvas);
+}
+
+.qg-grid tbody tr:last-child {
+  border-bottom: none;
+}
+
+.qg-grid tbody td {
+  padding: var(--grid-cell-padding-y) var(--grid-cell-padding-x);
+  color: var(--color-text-secondary);
+  height: var(--grid-row-height);
+  vertical-align: middle;
+}
+
+/* Alternate row styling - very subtle */
+.qg-grid tbody tr:nth-child(even) {
+  background-color: rgba(0, 0, 0, 0.01);
+}
+
+/* Fix for inputs inside grid cells - prevent double padding and alignment issues */
+.qg-grid tbody td input,
+.qg-grid tbody td select,
+.qg-grid tbody td textarea {
+  width: 100%;
+  padding: var(--space-2) var(--space-4);
+  margin: calc(var(--space-2) * -1) calc(var(--space-4) * -1);
+  font-family: var(--font-sans);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-primary);
+  background-color: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--card-radius);
+  transition: all var(--duration-fast) var(--ease-in-out);
+  box-sizing: border-box;
+}
+
+.qg-grid tbody td input:hover,
+.qg-grid tbody td select:hover,
+.qg-grid tbody td textarea:hover {
+  background-color: var(--color-surface);
+  border-color: var(--color-border-default);
+}
+
+.qg-grid tbody td input:focus,
+.qg-grid tbody td select:focus,
+.qg-grid tbody td textarea:focus {
+  outline: none;
+  background-color: var(--color-surface);
+  border-color: var(--color-accent-primary);
+  box-shadow: var(--focus-ring);
+}
+
+.qg-grid tbody td input::placeholder {
+  color: var(--color-text-disabled);
+}
+
+/* ============================================================================
+   FORM ELEMENTS
+   Minimal, precise inputs
+   ========================================================================= */
+
+.qg-input,
+.qg-select {
+  width: 100%;
+  padding: var(--space-6) var(--space-8);
+  font-family: var(--font-sans);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-primary);
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--card-radius);
+  transition: all var(--duration-fast) var(--ease-in-out);
+}
+
+.qg-input:hover,
+.qg-select:hover {
+  border-color: var(--color-border-emphasis);
+}
+
+.qg-input:focus,
+.qg-select:focus {
+  outline: none;
+  border-color: var(--color-accent-primary);
+  box-shadow: var(--focus-ring);
+}
+
+.qg-input::placeholder {
+  color: var(--color-text-disabled);
+}
+
+.qg-label {
+  display: block;
+  margin-bottom: var(--space-4);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  letter-spacing: var(--letter-spacing-wide);
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+}
+
+/* ============================================================================
+   BUTTON COMPONENTS
+   Minimal, functional actions
+   ========================================================================= */
+
+.qg-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-4);
+  padding: var(--space-6) var(--space-12);
+  font-family: var(--font-sans);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  letter-spacing: var(--letter-spacing-wide);
+  border: 1px solid transparent;
+  border-radius: var(--card-radius);
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--ease-in-out);
+  text-decoration: none;
+}
+
+.qg-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.qg-btn-primary {
+  background-color: var(--color-accent-primary);
+  color: white;
+  border-color: var(--color-accent-primary);
+}
+
+.qg-btn-primary:hover:not(:disabled) {
+  background-color: var(--color-accent-primary-hover);
+  border-color: var(--color-accent-primary-hover);
+}
+
+.qg-btn-secondary {
+  background-color: var(--color-surface);
+  color: var(--color-text-primary);
+  border-color: var(--color-border-emphasis);
+}
+
+.qg-btn-secondary:hover:not(:disabled) {
+  background-color: var(--color-canvas);
+  border-color: var(--color-border-strong);
+}
+
+.qg-btn-ghost {
+  background-color: transparent;
+  color: var(--color-text-secondary);
+  border-color: transparent;
+}
+
+.qg-btn-ghost:hover:not(:disabled) {
+  background-color: var(--color-canvas);
+  color: var(--color-text-primary);
+}
+
+.qg-btn-sm {
+  padding: var(--space-4) var(--space-8);
+  font-size: var(--font-size-xs);
+}
+
+/* ============================================================================
+   BADGE / TAG COMPONENTS
+   Semantic status indicators
+   ========================================================================= */
+
+.qg-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-6);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  letter-spacing: var(--letter-spacing-wide);
+  border-radius: 0.75rem; /* 12px - pill shape */
+  white-space: nowrap;
+}
+
+.qg-badge-success {
+  background-color: var(--color-success-subtle);
+  color: var(--color-success);
+  border: 1px solid var(--color-success-border);
+}
+
+.qg-badge-warning {
+  background-color: var(--color-warning-subtle);
+  color: var(--color-warning);
+  border: 1px solid var(--color-warning-border);
+}
+
+.qg-badge-error {
+  background-color: var(--color-error-subtle);
+  color: var(--color-error);
+  border: 1px solid var(--color-error-border);
+}
+
+.qg-badge-info {
+  background-color: var(--color-info-subtle);
+  color: var(--color-info);
+  border: 1px solid var(--color-info-border);
+}
+
+.qg-badge-neutral {
+  background-color: var(--color-canvas);
+  color: var(--color-text-secondary);
+  border: 1px solid var(--color-border-default);
+}
+
+/* ============================================================================
+   UTILITY CLASSES
+   Single-purpose helpers for common patterns
+   ========================================================================= */
+
+/* Spacing utilities */
+.qg-mb-4 { margin-bottom: var(--space-4); }
+.qg-mb-8 { margin-bottom: var(--space-8); }
+.qg-mb-12 { margin-bottom: var(--space-12); }
+.qg-mb-16 { margin-bottom: var(--space-16); }
+.qg-mb-24 { margin-bottom: var(--space-24); }
+.qg-mb-32 { margin-bottom: var(--space-32); }
+
+.qg-mt-4 { margin-top: var(--space-4); }
+.qg-mt-8 { margin-top: var(--space-8); }
+.qg-mt-12 { margin-top: var(--space-12); }
+.qg-mt-16 { margin-top: var(--space-16); }
+.qg-mt-24 { margin-top: var(--space-24); }
+.qg-mt-32 { margin-top: var(--space-32); }
+
+/* Text utilities */
+.qg-text-sm { font-size: var(--font-size-sm); }
+.qg-text-base { font-size: var(--font-size-base); }
+.qg-text-lg { font-size: var(--font-size-lg); }
+
+.qg-text-primary { color: var(--color-text-primary); }
+.qg-text-secondary { color: var(--color-text-secondary); }
+.qg-text-tertiary { color: var(--color-text-tertiary); }
+
+.qg-font-normal { font-weight: var(--font-weight-normal); }
+.qg-font-medium { font-weight: var(--font-weight-medium); }
+.qg-font-semibold { font-weight: var(--font-weight-semibold); }
+
+.qg-mono { font-family: var(--font-mono); }
+
+/* Layout utilities */
+.qg-flex { display: flex; }
+.qg-flex-col { flex-direction: column; }
+.qg-items-center { align-items: center; }
+.qg-justify-between { justify-content: space-between; }
+.qg-gap-4 { gap: var(--space-4); }
+.qg-gap-8 { gap: var(--space-8); }
+.qg-gap-12 { gap: var(--space-12); }
+
+/* Rename grid utility to avoid collision with table class `.qg-grid` */
+.qg-grid-layout { display: grid; }
+.qg-grid-layout.qg-grid-2 { grid-template-columns: repeat(2, 1fr); }
+.qg-grid-layout.qg-grid-3 { grid-template-columns: repeat(3, 1fr); }
+.qg-grid-layout.qg-grid-4 { grid-template-columns: repeat(4, 1fr); }
+
+/* QuickGrid utilities */
+/* Opt-in auto layout to allow columns to size to content/min-widths */
+.qg-grid.qg-grid-auto { table-layout: auto !important; }
+/* Ellipsis for overflowing cell content */
+.qg-ellipsis { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* Common wide column for email addresses */
+.qg-col-email { min-width: 400px; }
+
+/* ============================================================================
+   RESPONSIVE DESIGN
+   Mobile-first approach with precision breakpoints
+   ========================================================================= */
+
+@media (max-width: 768px) {
+  :root {
+    --container-padding: var(--space-12);
+    --section-gap: var(--space-24);
+    --card-padding: var(--space-12);
+    /* Reduce adjustment on small screens if space is tight */
+    --grid-header-left-adjust: var(--space-4); /* 0.5rem */
+  }
+  
+  .qg-page-title {
+    font-size: var(--font-size-3xl);
+  }
+  
+  .qg-section-title {
+    font-size: var(--font-size-xl);
+  }
+  
+  .qg-grid {
+    font-size: var(--font-size-xs);
+  }
+  
+  .qg-grid thead th,
+  .qg-grid tbody td {
+    padding: var(--space-6) var(--space-8);
+  }
+  
+  .qg-grid-2,
+  .qg-grid-3,
+  .qg-grid-4 {
+    grid-template-columns: 1fr; /* Applies only when used with .qg-grid-layout */
+  }
+}
+
+/* ============================================================================
+   PRINT STYLES
+   Clean, accessible printed output
+   ========================================================================= */
+
+@media print {
+  body {
+    background-color: white;
+  }
+  
+  .qg-card,
+  .qg-grid-container {
+    box-shadow: none;
+    border-color: var(--color-border-emphasis);
+  }
+  
+  .qg-grid tbody tr:hover {
+    background-color: transparent;
+  }
+}
+
+/* ============================================================================
+   LAYER & FEATURE COMPONENTS (Global)
+   Shared styling for architectural layer explanations and feature highlight cards
+   ========================================================================= */
+
+.layer-name {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  letter-spacing: var(--letter-spacing-wide);
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+  margin: 0 0 var(--space-4) 0;
+}
+
+.layer-content {
+  font-size: var(--font-size-sm);
+  line-height: var(--line-height-relaxed);
+  color: var(--color-text-secondary);
+  margin: 0 0 var(--space-12) 0;
+}
+
+.feature-title {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  margin: 0 0 var(--space-2) 0;
+}
+
+.feature-desc {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  line-height: var(--line-height-relaxed);
+  margin: 0;
+}
+
+/* ============================================================================
+   FORMROW COLUMN STYLES
+   Overlay form rendering within QuickGrid rows
+   Uses the Refined Minimalism design system tokens
+   ========================================================================= */
+
+/* ----------------------------------------------------------------------------
+   Grid-level styles (applied to QuickGrid when FormRowColumn is present)
+   -------------------------------------------------------------------------- */
+
+.qg-form-grid tbody tr {
+    position: relative;
+}
+
+.qg-form-grid.has-active-form tbody tr:not(.form-row-active) td {
+    opacity: 0.5;
+    pointer-events: none;
+    transition: opacity var(--duration-normal, 200ms) var(--ease-in-out, ease);
+}
+
+.qg-form-grid tbody tr.form-row-active {
+    z-index: 11;
+}
+
+/* ----------------------------------------------------------------------------
+   Cell wrapper
+   -------------------------------------------------------------------------- */
+
+.form-row-cell {
+    position: relative;
+    min-width: 80px;
+}
+
+    .form-row-cell.form-dimmed {
+        opacity: 0.5;
+        pointer-events: none;
+    }
+
+    .form-row-cell.form-active {
+        position: static; /* Allow overlay to escape cell bounds */
+    }
+
+/* ----------------------------------------------------------------------------
+   Form overlay (the card that appears over the row)
+   -------------------------------------------------------------------------- */
+
+.form-row-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    min-height: 100%;
+    z-index: 100;
+    /* Card styling */
+    background: var(--color-surface, #ffffff);
+    border: 1px solid var(--color-border-emphasis, #d0d7de);
+    border-radius: var(--card-radius, 6px);
+    box-shadow: var(--shadow-lg, 0 8px 24px rgba(140, 149, 159, 0.2));
+    padding: var(--space-16, 16px);
+    /* Ensure it covers adjacent cells visually */
+    min-width: max(400px, 100%);
+    transform: translateX(-50%);
+    left: 50%;
+}
+
+    /* Alternative: Below-row expansion (if preferred) */
+    .form-row-overlay.below-row {
+        top: 100%;
+        transform: none;
+        left: 0;
+        margin-top: var(--space-4, 4px);
+    }
+
+/* ----------------------------------------------------------------------------
+   Form Card
+   -------------------------------------------------------------------------- */
+
+.form-card {
+    background: transparent;
+}
+
+.form-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--space-16, 16px);
+    padding-bottom: var(--space-12, 12px);
+    border-bottom: 1px solid var(--color-border-default, #d0d7de);
+}
+
+.form-card-title {
+    margin: 0;
+    font-size: var(--font-size-lg, 1.125rem);
+    font-weight: var(--font-weight-semibold, 600);
+    color: var(--color-text-primary, #1f2328);
+}
+
+.form-card-header-actions {
+    display: flex;
+    gap: var(--space-8, 8px);
+}
+
+.form-card-body {
+    /* Content flows naturally */
+}
+
+.form-card-footer {
+    margin-top: var(--space-16, 16px);
+    padding-top: var(--space-12, 12px);
+    border-top: 1px solid var(--color-border-default, #d0d7de);
+}
+
+/* ----------------------------------------------------------------------------
+   Form Section
+   -------------------------------------------------------------------------- */
+
+.form-section {
+    margin-bottom: var(--space-20, 20px);
+}
+
+    .form-section:last-child {
+        margin-bottom: 0;
+    }
+
+.form-section-title {
+    margin: 0 0 var(--space-12, 12px) 0;
+    font-size: var(--font-size-xs, 0.75rem);
+    font-weight: var(--font-weight-medium, 500);
+    text-transform: uppercase;
+    letter-spacing: var(--letter-spacing-wide, 0.05em);
+    color: var(--color-text-tertiary, #656d76);
+}
+
+.form-section-content {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: var(--space-16, 16px) var(--space-20, 20px);
+}
+
+/* Fixed column layouts */
+.form-section-columns-2 {
+    grid-template-columns: repeat(2, 1fr);
+}
+
+.form-section-columns-3 {
+    grid-template-columns: repeat(3, 1fr);
+}
+
+.form-section-columns-4 {
+    grid-template-columns: repeat(4, 1fr);
+}
+
+/* ----------------------------------------------------------------------------
+   Form Field
+   -------------------------------------------------------------------------- */
+
+.form-field {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4, 4px);
+}
+
+    .form-field.dirty .form-field-label {
+        color: var(--color-accent-primary, #0969da);
+    }
+
+    .form-field.has-errors .form-field-input {
+        border-color: var(--color-error, #cf222e);
+        background-color: var(--color-error-subtle, #ffebe9);
+    }
+
+    .form-field.readonly .form-field-input {
+        background-color: var(--color-canvas, #f6f8fa);
+        cursor: not-allowed;
+    }
+
+    .form-field.disabled .form-field-input {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+
+/* Label */
+.form-field-label {
+    font-size: var(--font-size-sm, 0.875rem);
+    font-weight: var(--font-weight-medium, 500);
+    color: var(--color-text-secondary, #59636e);
+    display: flex;
+    align-items: center;
+    gap: var(--space-2, 2px);
+}
+
+.form-field-required {
+    color: var(--color-error, #cf222e);
+}
+
+/* Input */
+.form-field-input {
+    width: 100%;
+    padding: var(--space-8, 8px) var(--space-12, 12px);
+    font-family: var(--font-sans, system-ui, sans-serif);
+    font-size: var(--font-size-sm, 0.875rem);
+    color: var(--color-text-primary, #1f2328);
+    background-color: var(--color-surface, #ffffff);
+    border: 1px solid var(--color-border-default, #d0d7de);
+    border-radius: var(--card-radius, 6px);
+    transition: all var(--duration-fast, 150ms) var(--ease-in-out, ease);
+}
+
+    .form-field-input:hover:not(:disabled):not(:read-only) {
+        border-color: var(--color-border-emphasis, #868f99);
+    }
+
+    .form-field-input:focus {
+        outline: none;
+        border-color: var(--color-accent-primary, #0969da);
+        box-shadow: var(--focus-ring, 0 0 0 3px rgba(9, 105, 218, 0.3));
+    }
+
+    .form-field-input::placeholder {
+        color: var(--color-text-disabled, #8c959f);
+    }
+
+    .form-field-input.invalid {
+        border-color: var(--color-error, #cf222e);
+    }
+
+        .form-field-input.invalid:focus {
+            box-shadow: 0 0 0 3px rgba(207, 34, 46, 0.3);
+        }
+
+/* Textarea */
+textarea.form-field-input {
+    min-height: 80px;
+    resize: vertical;
+}
+
+/* Select */
+select.form-field-input {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23656d76' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right var(--space-12, 12px) center;
+    padding-right: var(--space-32, 32px);
+}
+
+/* Checkbox wrapper */
+.form-field-checkbox-wrapper {
+    display: flex;
+    align-items: center;
+    height: 38px; /* Match input height */
+}
+
+    .form-field-checkbox-wrapper input[type="checkbox"] {
+        width: 18px;
+        height: 18px;
+        cursor: pointer;
+    }
+
+/* Validation errors */
+.form-field-errors {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2, 2px);
+}
+
+.form-field-error {
+    font-size: var(--font-size-xs, 0.75rem);
+    color: var(--color-error, #cf222e);
+}
+
+/* ----------------------------------------------------------------------------
+   Form Actions
+   -------------------------------------------------------------------------- */
+
+.form-actions {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-12, 12px);
+    margin-top: var(--space-20, 20px);
+    padding-top: var(--space-16, 16px);
+    border-top: 1px solid var(--color-border-default, #d0d7de);
+}
+
+.form-actions-error {
+    display: flex;
+    align-items: center;
+    gap: var(--space-8, 8px);
+    padding: var(--space-8, 8px) var(--space-12, 12px);
+    background-color: var(--color-error-subtle, #ffebe9);
+    border: 1px solid var(--color-error-border, #ff8182);
+    border-radius: var(--card-radius, 6px);
+    color: var(--color-error, #cf222e);
+    font-size: var(--font-size-sm, 0.875rem);
+}
+
+.form-actions-buttons {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--space-8, 8px);
+}
+
+.form-actions-spinner {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    border: 2px solid currentColor;
+    border-right-color: transparent;
+    border-radius: 50%;
+    animation: form-spin 0.75s linear infinite;
+    margin-right: var(--space-4, 4px);
+}
+
+@keyframes form-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* ----------------------------------------------------------------------------
+   Row click indicator
+   -------------------------------------------------------------------------- */
+
+.form-row-click-indicator {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-8, 8px);
+    color: var(--color-text-tertiary, #656d76);
+    cursor: pointer;
+    border-radius: var(--card-radius, 6px);
+    transition: all var(--duration-fast, 150ms) var(--ease-in-out, ease);
+}
+
+    .form-row-click-indicator:hover {
+        color: var(--color-accent-primary, #0969da);
+        background-color: var(--color-accent-subtle, #ddf4ff);
+    }
+
+/* ----------------------------------------------------------------------------
+   Responsive adjustments
+   -------------------------------------------------------------------------- */
+
+@media (max-width: 768px) {
+    .form-row-overlay {
+        min-width: 100%;
+        transform: none;
+        left: 0;
+        padding: var(--space-12, 12px);
+    }
+
+    .form-section-content {
+        grid-template-columns: 1fr;
+    }
+
+    .form-section-columns-2,
+    .form-section-columns-3,
+    .form-section-columns-4 {
+        grid-template-columns: 1fr;
+    }
+
+    .form-actions-buttons {
+        flex-direction: column-reverse;
+    }
+
+        .form-actions-buttons button {
+            width: 100%;
+        }
+}
+
+/* ----------------------------------------------------------------------------
+   Animation for form appearance
+   -------------------------------------------------------------------------- */
+
+.form-row-overlay {
+    animation: form-slide-in var(--duration-normal, 200ms) var(--ease-in-out, ease);
+}
+
+@keyframes form-slide-in {
+    from {
+        opacity: 0;
+        transform: translateX(-50%) translateY(-8px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+    }
+}
+
+/* For below-row variant */
+.form-row-overlay.below-row {
+    animation-name: form-slide-down;
+}
+
+@keyframes form-slide-down {
+    from {
+        opacity: 0;
+        transform: translateY(-8px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}

@@ -1,0 +1,12 @@
+{
+  "profiles": {
+    "Cookbook.Platform.Orchestrator": {
+      "commandName": "Project",
+      "launchBrowser": true,
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      },
+      "applicationUrl": "https://localhost:51568;http://localhost:51573"
+    }
+  }
+}

@@ -1,0 +1,244 @@
+[
+  {
+    "id": "recipe-001",
+    "name": "Classic Spaghetti Carbonara",
+    "description": "A creamy Italian pasta dish with eggs, cheese, and pancetta",
+    "ingredients": [
+      { "name": "Spaghetti", "quantity": 400, "unit": "g" },
+      { "name": "Pancetta", "quantity": 200, "unit": "g" },
+      { "name": "Eggs", "quantity": 4, "unit": "whole" },
+      { "name": "Parmesan cheese", "quantity": 100, "unit": "g" },
+      { "name": "Black pepper", "quantity": 1, "unit": "tsp" },
+      { "name": "Salt", "quantity": 1, "unit": "tsp" }
+    ],
+    "instructions": [
+      "Cook spaghetti in salted boiling water until al dente",
+      "While pasta cooks, fry pancetta until crispy",
+      "Beat eggs with grated parmesan and black pepper",
+      "Drain pasta, reserving some cooking water",
+      "Toss hot pasta with pancetta, then remove from heat",
+      "Add egg mixture and toss quickly to create creamy sauce",
+      "Add pasta water if needed for consistency"
+    ],
+    "cuisine": "Italian",
+    "dietType": null,
+    "prepTimeMinutes": 10,
+    "cookTimeMinutes": 20,
+    "servings": 4,
+    "tags": ["pasta", "italian", "quick", "comfort food"]
+  },
+  {
+    "id": "recipe-002",
+    "name": "Grilled Chicken Caesar Salad",
+    "description": "Fresh romaine lettuce with grilled chicken, croutons, and Caesar dressing",
+    "ingredients": [
+      { "name": "Chicken breast", "quantity": 2, "unit": "pieces" },
+      { "name": "Romaine lettuce", "quantity": 2, "unit": "heads" },
+      { "name": "Parmesan cheese", "quantity": 50, "unit": "g" },
+      { "name": "Croutons", "quantity": 1, "unit": "cup" },
+      { "name": "Caesar dressing", "quantity": 0.5, "unit": "cup" },
+      { "name": "Olive oil", "quantity": 2, "unit": "tbsp" },
+      { "name": "Garlic", "quantity": 2, "unit": "cloves" }
+    ],
+    "instructions": [
+      "Season chicken breasts with salt and pepper",
+      "Grill chicken for 6-7 minutes per side until cooked through",
+      "Let chicken rest for 5 minutes, then slice",
+      "Chop romaine lettuce and place in a large bowl",
+      "Add croutons and shaved parmesan",
+      "Top with sliced chicken",
+      "Drizzle with Caesar dressing and toss to combine"
+    ],
+    "cuisine": "American",
+    "dietType": null,
+    "prepTimeMinutes": 15,
+    "cookTimeMinutes": 15,
+    "servings": 2,
+    "tags": ["salad", "healthy", "chicken", "lunch"]
+  },
+  {
+    "id": "recipe-003",
+    "name": "Vegetarian Buddha Bowl",
+    "description": "A nourishing bowl with quinoa, roasted vegetables, and tahini dressing",
+    "ingredients": [
+      { "name": "Quinoa", "quantity": 1, "unit": "cup" },
+      { "name": "Sweet potato", "quantity": 2, "unit": "medium" },
+      { "name": "Chickpeas", "quantity": 1, "unit": "can" },
+      { "name": "Kale", "quantity": 2, "unit": "cups" },
+      { "name": "Avocado", "quantity": 1, "unit": "whole" },
+      { "name": "Tahini", "quantity": 3, "unit": "tbsp" },
+      { "name": "Lemon juice", "quantity": 2, "unit": "tbsp" },
+      { "name": "Olive oil", "quantity": 2, "unit": "tbsp" }
+    ],
+    "instructions": [
+      "Cook quinoa according to package directions",
+      "Cube sweet potatoes and roast at 400°F for 25 minutes",
+      "Drain and rinse chickpeas, toss with olive oil and roast for 20 minutes",
+      "Massage kale with olive oil and salt",
+      "Make dressing: whisk tahini, lemon juice, and water",
+      "Assemble bowls with quinoa, vegetables, and sliced avocado",
+      "Drizzle with tahini dressing"
+    ],
+    "cuisine": "American",
+    "dietType": "vegetarian",
+    "prepTimeMinutes": 15,
+    "cookTimeMinutes": 30,
+    "servings": 2,
+    "tags": ["vegetarian", "healthy", "bowl", "vegan-optional"]
+  },
+  {
+    "id": "recipe-004",
+    "name": "Thai Green Curry",
+    "description": "Aromatic Thai curry with coconut milk, vegetables, and your choice of protein",
+    "ingredients": [
+      { "name": "Chicken thighs", "quantity": 500, "unit": "g" },
+      { "name": "Green curry paste", "quantity": 3, "unit": "tbsp" },
+      { "name": "Coconut milk", "quantity": 400, "unit": "ml" },
+      { "name": "Thai basil", "quantity": 1, "unit": "cup" },
+      { "name": "Bell peppers", "quantity": 2, "unit": "medium" },
+      { "name": "Bamboo shoots", "quantity": 1, "unit": "can" },
+      { "name": "Fish sauce", "quantity": 2, "unit": "tbsp" },
+      { "name": "Brown sugar", "quantity": 1, "unit": "tbsp" }
+    ],
+    "instructions": [
+      "Cut chicken into bite-sized pieces",
+      "Heat oil in a wok over high heat",
+      "Fry curry paste for 1 minute until fragrant",
+      "Add chicken and cook until sealed",
+      "Pour in coconut milk and bring to a simmer",
+      "Add vegetables and cook for 10 minutes",
+      "Season with fish sauce and sugar",
+      "Garnish with Thai basil and serve with rice"
+    ],
+    "cuisine": "Asian",
+    "dietType": null,
+    "prepTimeMinutes": 15,
+    "cookTimeMinutes": 25,
+    "servings": 4,
+    "tags": ["thai", "curry", "spicy", "asian"]
+  },
+  {
+    "id": "recipe-005",
+    "name": "Classic Beef Tacos",
+    "description": "Seasoned ground beef in crispy taco shells with fresh toppings",
+    "ingredients": [
+      { "name": "Ground beef", "quantity": 500, "unit": "g" },
+      { "name": "Taco seasoning", "quantity": 2, "unit": "tbsp" },
+      { "name": "Taco shells", "quantity": 12, "unit": "pieces" },
+      { "name": "Lettuce", "quantity": 2, "unit": "cups" },
+      { "name": "Tomatoes", "quantity": 2, "unit": "medium" },
+      { "name": "Cheddar cheese", "quantity": 1, "unit": "cup" },
+      { "name": "Sour cream", "quantity": 0.5, "unit": "cup" },
+      { "name": "Salsa", "quantity": 1, "unit": "cup" }
+    ],
+    "instructions": [
+      "Brown ground beef in a skillet over medium-high heat",
+      "Drain excess fat",
+      "Add taco seasoning and water, simmer for 5 minutes",
+      "Warm taco shells according to package directions",
+      "Shred lettuce and dice tomatoes",
+      "Grate cheese",
+      "Assemble tacos with meat and toppings",
+      "Serve with sour cream and salsa"
+    ],
+    "cuisine": "Mexican",
+    "dietType": null,
+    "prepTimeMinutes": 10,
+    "cookTimeMinutes": 15,
+    "servings": 4,
+    "tags": ["mexican", "tacos", "beef", "family-friendly"]
+  },
+  {
+    "id": "recipe-006",
+    "name": "Keto Cauliflower Fried Rice",
+    "description": "Low-carb alternative to fried rice using cauliflower",
+    "ingredients": [
+      { "name": "Cauliflower", "quantity": 1, "unit": "head" },
+      { "name": "Eggs", "quantity": 3, "unit": "whole" },
+      { "name": "Sesame oil", "quantity": 2, "unit": "tbsp" },
+      { "name": "Soy sauce", "quantity": 3, "unit": "tbsp" },
+      { "name": "Green onions", "quantity": 4, "unit": "stalks" },
+      { "name": "Garlic", "quantity": 3, "unit": "cloves" },
+      { "name": "Ginger", "quantity": 1, "unit": "tbsp" },
+      { "name": "Peas", "quantity": 0.5, "unit": "cup" }
+    ],
+    "instructions": [
+      "Rice the cauliflower using a food processor",
+      "Scramble eggs in a wok and set aside",
+      "Heat sesame oil and sauté garlic and ginger",
+      "Add cauliflower rice and cook for 5-7 minutes",
+      "Add peas and cook for 2 minutes",
+      "Add scrambled eggs back to the wok",
+      "Season with soy sauce",
+      "Garnish with sliced green onions"
+    ],
+    "cuisine": "Asian",
+    "dietType": "keto",
+    "prepTimeMinutes": 15,
+    "cookTimeMinutes": 15,
+    "servings": 4,
+    "tags": ["keto", "low-carb", "asian", "healthy"]
+  },
+  {
+    "id": "recipe-007",
+    "name": "Mediterranean Quinoa Salad",
+    "description": "Refreshing salad with quinoa, cucumber, tomatoes, and feta cheese",
+    "ingredients": [
+      { "name": "Quinoa", "quantity": 1, "unit": "cup" },
+      { "name": "Cucumber", "quantity": 1, "unit": "large" },
+      { "name": "Cherry tomatoes", "quantity": 1, "unit": "cup" },
+      { "name": "Feta cheese", "quantity": 100, "unit": "g" },
+      { "name": "Kalamata olives", "quantity": 0.5, "unit": "cup" },
+      { "name": "Red onion", "quantity": 0.5, "unit": "medium" },
+      { "name": "Olive oil", "quantity": 3, "unit": "tbsp" },
+      { "name": "Lemon juice", "quantity": 2, "unit": "tbsp" }
+    ],
+    "instructions": [
+      "Cook quinoa and let cool completely",
+      "Dice cucumber and halve cherry tomatoes",
+      "Slice red onion thinly",
+      "Crumble feta cheese",
+      "Combine all ingredients in a large bowl",
+      "Whisk olive oil and lemon juice for dressing",
+      "Toss salad with dressing",
+      "Season with salt and pepper to taste"
+    ],
+    "cuisine": "Mediterranean",
+    "dietType": "vegetarian",
+    "prepTimeMinutes": 15,
+    "cookTimeMinutes": 15,
+    "servings": 4,
+    "tags": ["mediterranean", "salad", "healthy", "vegetarian"]
+  },
+  {
+    "id": "recipe-008",
+    "name": "Vegan Black Bean Burgers",
+    "description": "Hearty plant-based burgers with black beans and spices",
+    "ingredients": [
+      { "name": "Black beans", "quantity": 2, "unit": "cans" },
+      { "name": "Breadcrumbs", "quantity": 1, "unit": "cup" },
+      { "name": "Onion", "quantity": 1, "unit": "medium" },
+      { "name": "Garlic", "quantity": 3, "unit": "cloves" },
+      { "name": "Cumin", "quantity": 1, "unit": "tsp" },
+      { "name": "Smoked paprika", "quantity": 1, "unit": "tsp" },
+      { "name": "Burger buns", "quantity": 4, "unit": "pieces" },
+      { "name": "Avocado", "quantity": 1, "unit": "whole" }
+    ],
+    "instructions": [
+      "Drain and rinse black beans",
+      "Mash beans, leaving some chunks for texture",
+      "Sauté onion and garlic until soft",
+      "Combine beans, onion mixture, breadcrumbs, and spices",
+      "Form into 4 patties",
+      "Grill or pan-fry for 4-5 minutes per side",
+      "Toast burger buns",
+      "Assemble with sliced avocado and your favorite toppings"
+    ],
+    "cuisine": "American",
+    "dietType": "vegan",
+    "prepTimeMinutes": 20,
+    "cookTimeMinutes": 10,
+    "servings": 4,
+    "tags": ["vegan", "burgers", "plant-based", "healthy"]
+  }
+]

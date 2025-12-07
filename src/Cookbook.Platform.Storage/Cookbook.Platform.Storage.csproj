@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+<PropertyGroup>
+  <TargetFramework>net10.0</TargetFramework>
+  <ImplicitUsings>enable</ImplicitUsings>
+  <Nullable>enable</Nullable>
+  <RootNamespace>Cookbook.Platform.Storage</RootNamespace>
+</PropertyGroup>
+
+<ItemGroup>
+  <PackageReference Include="Aspire.Microsoft.Azure.Cosmos" Version="9.3.0" />
+  <PackageReference Include="Aspire.Azure.Storage.Blobs" Version="9.3.0" />
+  <PackageReference Include="Microsoft.Extensions.Options" Version="9.0.0" />
+</ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Cookbook.Platform.Shared\Cookbook.Platform.Shared.csproj" />
+  </ItemGroup>
+
+</Project>

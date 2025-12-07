@@ -1,0 +1,94 @@
+﻿@page "/recipes"
+@inject ApiClientService ApiClient
+@rendermode InteractiveServer
+
+<PageTitle>Recipes</PageTitle>
+
+<header class="qg-page-header">
+    <h1 class="qg-page-title">Recipe Library</h1>
+    <p class="qg-page-subtitle">
+        Browse and search your collection of recipes
+    </p>
+</header>
+
+<div class="search-bar" style="max-width: 400px;">
+    <input type="text" class="qg-input" @bind="searchQuery" 
+           placeholder="Search recipes..." />
+    <button class="qg-btn qg-btn-secondary" @onclick="SearchRecipes">
+        Search
+    </button>
+</div>
+
+@if (isLoading)
+{
+    <div class="loading-container">
+        <div class="loading-spinner"></div>
+    </div>
+}
+else if (recipes.Any())
+{
+    <div class="recipe-grid">
+        @foreach (var recipe in recipes)
+        {
+            <div class="recipe-card">
+                <div class="recipe-card-body">
+                    <h3 class="recipe-card-title">@recipe.Name</h3>
+                    <p class="recipe-card-description">@recipe.Description</p>
+                    <div class="candidate-tags qg-mb-12">
+                        @if (!string.IsNullOrEmpty(recipe.Cuisine))
+                        {
+                            <span class="qg-badge qg-badge-neutral">@recipe.Cuisine</span>
+                        }
+                        @if (!string.IsNullOrEmpty(recipe.DietType))
+                        {
+                            <span class="qg-badge qg-badge-success">@recipe.DietType</span>
+                        }
+                    </div>
+                    <div class="recipe-card-meta">
+                        <span>@(recipe.PrepTimeMinutes + recipe.CookTimeMinutes) min</span>
+                        <span>@recipe.Servings servings</span>
+                    </div>
+                </div>
+                <div class="recipe-card-footer">
+                    <a href="/recipes/@recipe.Id" class="qg-btn qg-btn-sm qg-btn-primary">View Recipe</a>
+                </div>
+            </div>
+        }
+    </div>
+}
+else
+{
+    <div class="empty-state">
+        <p class="empty-state-text">
+            No recipes found. Try a different search or add some recipes!
+        </p>
+    </div>
+}
+
+@code {
+    private string searchQuery = "";
+    private bool isLoading = true;
+    private List<ApiClientService.RecipeListItem> recipes = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await SearchRecipes();
+    }
+
+    private async Task SearchRecipes()
+    {
+        isLoading = true;
+        StateHasChanged();
+
+        try
+        {
+            recipes = await ApiClient.SearchRecipesAsync(searchQuery);
+        }
+        catch
+        {
+            recipes = new();
+        }
+
+        isLoading = false;
+    }
+}

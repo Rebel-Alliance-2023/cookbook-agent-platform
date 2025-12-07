@@ -1,0 +1,277 @@
+﻿@page "/"
+@using global::Cookbook.Platform.Shared.Messaging
+@inject SignalRClientService SignalRClient
+@inject ApiClientService ApiClient
+@rendermode InteractiveServer
+
+<PageTitle>Cookbook Agent</PageTitle>
+
+<header class="qg-page-header">
+    <h1 class="qg-page-title">Recipe Research</h1>
+    <p class="qg-page-subtitle">
+        Discover and analyze recipes using AI-powered agents
+    </p>
+</header>
+
+<div class="page-grid">
+    <div>
+        <!-- Search Card -->
+        <div class="qg-card qg-mb-24">
+            <div class="qg-section-header">
+                <h3 class="qg-section-title">What would you like to cook?</h3>
+            </div>
+
+            <div class="search-bar">
+                <input type="text" class="qg-input" 
+                       @bind="searchQuery" 
+                       @bind:event="oninput"
+                       placeholder="e.g., Italian pasta with chicken" />
+                <button class="qg-btn qg-btn-primary" @onclick="StartResearch" disabled="@isLoading">
+                    @if (isLoading)
+                    {
+                        <span class="loading-spinner" style="width: 14px; height: 14px; border-width: 2px;"></span>
+                        <span>Researching...</span>
+                    }
+                    else
+                    {
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 4px;">
+                            <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+                        </svg>
+                        <span>Search</span>
+                    }
+                </button>
+            </div>
+
+            <div class="filter-row">
+                <div class="filter-group">
+                    <label class="qg-label">Diet Type</label>
+                    <select class="qg-select" @bind="dietType">
+                        <option value="">Any</option>
+                        <option value="vegetarian">Vegetarian</option>
+                        <option value="vegan">Vegan</option>
+                        <option value="keto">Keto</option>
+                        <option value="paleo">Paleo</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label class="qg-label">Cuisine</label>
+                    <select class="qg-select" @bind="cuisine">
+                        <option value="">Any</option>
+                        <option value="italian">Italian</option>
+                        <option value="mexican">Mexican</option>
+                        <option value="asian">Asian</option>
+                        <option value="american">American</option>
+                    </select>
+                </div>
+            </div>
+
+            @if (!string.IsNullOrEmpty(currentPhase))
+            {
+                <div class="progress-alert">
+                    <div class="progress-phase">@currentPhase</div>
+                    <div class="progress-bar-container">
+                        <div class="progress-bar-fill" style="width: @(progress)%"></div>
+                    </div>
+                </div>
+            }
+
+            @if (errorMessage != null)
+            {
+                <div class="error-alert">@errorMessage</div>
+            }
+        </div>
+
+        <!-- Recipe Candidates -->
+        @if (candidates.Any())
+        {
+            <div class="qg-card">
+                <div class="qg-section-header">
+                    <h3 class="qg-section-title">Recipe Candidates</h3>
+                    <p class="qg-section-description">Select a recipe to analyze in detail</p>
+                </div>
+
+                <div class="candidate-list">
+                    @foreach (var candidate in candidates)
+                    {
+                        <div class="candidate-item">
+                            <div class="candidate-header">
+                                <h4 class="candidate-title">@candidate.Name</h4>
+                                <span class="candidate-score">Score: @candidate.Score.ToString("P0")</span>
+                            </div>
+                            <p class="candidate-description">@candidate.Description</p>
+                            <div class="candidate-tags">
+                                @if (!string.IsNullOrEmpty(candidate.Cuisine))
+                                {
+                                    <span class="qg-badge qg-badge-neutral">@candidate.Cuisine</span>
+                                }
+                                @if (!string.IsNullOrEmpty(candidate.DietType))
+                                {
+                                    <span class="qg-badge qg-badge-success">@candidate.DietType</span>
+                                }
+                            </div>
+                            <button class="qg-btn qg-btn-sm qg-btn-primary" @onclick="() => SelectRecipe(candidate)">
+                                Analyze Recipe
+                            </button>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+
+    <div>
+        <StreamViewer Events="@events" />
+    </div>
+</div>
+
+@code {
+    private string searchQuery = "";
+    private string dietType = "";
+    private string cuisine = "";
+    private bool isLoading = false;
+    private string? currentPhase;
+    private int progress = 0;
+    private string? errorMessage;
+    private string? threadId;
+    private List<RecipeCandidate> candidates = new();
+    private List<StreamEvent> events = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Create a new session
+        threadId = await ApiClient.CreateSessionAsync();
+        
+        // Connect to SignalR
+        await SignalRClient.ConnectAsync();
+        await SignalRClient.JoinThreadAsync(threadId);
+
+        // Subscribe to events
+        SignalRClient.OnEvent += HandleEvent;
+    }
+
+    private async Task StartResearch()
+    {
+        if (string.IsNullOrWhiteSpace(searchQuery))
+            return;
+
+        isLoading = true;
+        errorMessage = null;
+        candidates.Clear();
+        events.Clear();
+        currentPhase = "Starting research...";
+        progress = 0;
+        StateHasChanged();
+
+        try
+        {
+            await ApiClient.CreateTaskAsync(threadId!, "Research", searchQuery);
+        }
+        catch (Exception ex)
+        {
+            errorMessage = ex.Message;
+            isLoading = false;
+        }
+    }
+
+    private void HandleEvent(AgentEvent agentEvent)
+    {
+        events.Insert(0, new StreamEvent
+        {
+            Type = agentEvent.EventType,
+            Payload = agentEvent.Payload,
+            Timestamp = agentEvent.Timestamp
+        });
+
+        // Handle progress updates
+        if (agentEvent.EventType.Contains("progress"))
+        {
+            try
+            {
+                var data = System.Text.Json.JsonDocument.Parse(agentEvent.Payload);
+                if (data.RootElement.TryGetProperty("Phase", out var phase))
+                {
+                    currentPhase = phase.GetString();
+                }
+                if (data.RootElement.TryGetProperty("Progress", out var prog))
+                {
+                    progress = prog.GetInt32();
+                }
+            }
+            catch { }
+        }
+
+        // Handle task completion
+        if (agentEvent.EventType == "task.completed")
+        {
+            isLoading = false;
+            currentPhase = null;
+            progress = 100;
+            
+            // Parse candidates from result
+            try
+            {
+                var data = System.Text.Json.JsonDocument.Parse(agentEvent.Payload);
+                if (data.RootElement.TryGetProperty("Result", out var result) &&
+                    result.TryGetProperty("Candidates", out var candidatesJson))
+                {
+                    candidates = System.Text.Json.JsonSerializer.Deserialize<List<RecipeCandidate>>(
+                        candidatesJson.GetRawText()) ?? new();
+                }
+            }
+            catch { }
+        }
+
+        // Handle task failure
+        if (agentEvent.EventType == "task.failed")
+        {
+            isLoading = false;
+            currentPhase = null;
+            
+            try
+            {
+                var data = System.Text.Json.JsonDocument.Parse(agentEvent.Payload);
+                if (data.RootElement.TryGetProperty("Error", out var error))
+                {
+                    errorMessage = error.GetString();
+                }
+            }
+            catch { }
+        }
+
+        InvokeAsync(StateHasChanged);
+    }
+
+    private async Task SelectRecipe(RecipeCandidate candidate)
+    {
+        isLoading = true;
+        currentPhase = "Starting analysis...";
+        progress = 0;
+        StateHasChanged();
+
+        try
+        {
+            await ApiClient.CreateTaskAsync(threadId!, "Analysis", 
+                System.Text.Json.JsonSerializer.Serialize(new { RecipeId = candidate.Id }));
+        }
+        catch (Exception ex)
+        {
+            errorMessage = ex.Message;
+            isLoading = false;
+        }
+    }
+
+    public void Dispose()
+    {
+        SignalRClient.OnEvent -= HandleEvent;
+    }
+
+    private record RecipeCandidate
+    {
+        public string Id { get; init; } = "";
+        public string Name { get; init; } = "";
+        public string? Description { get; init; }
+        public string? Cuisine { get; init; }
+        public string? DietType { get; init; }
+        public double Score { get; init; }
+    }
+}

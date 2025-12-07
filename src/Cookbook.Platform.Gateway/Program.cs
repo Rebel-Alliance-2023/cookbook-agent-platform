@@ -1,0 +1,59 @@
+using Cookbook.Platform.Gateway.Endpoints;
+using Cookbook.Platform.Infrastructure;
+using Cookbook.Platform.Storage;
+
+var builder = WebApplication.CreateBuilder(args);
+
+// Add Aspire service defaults
+builder.AddServiceDefaults();
+
+// Add Redis
+builder.AddRedisClient("redis");
+
+// Add Cosmos DB
+builder.AddAzureCosmosClient("cosmos");
+
+// Add infrastructure services
+builder.Services.AddMessagingBus(builder.Configuration);
+
+// Add storage services
+builder.Services.AddCosmosRepositories(builder.Configuration);
+
+// Add CORS for Blazor client
+builder.Services.AddCors(options =>
+{
+    options.AddDefaultPolicy(policy =>
+    {
+        policy.AllowAnyOrigin()
+            .AllowAnyMethod()
+            .AllowAnyHeader();
+    });
+});
+
+// Add OpenAPI
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
+
+var app = builder.Build();
+
+// Configure the HTTP request pipeline
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
+
+app.UseCors();
+
+// Map default endpoints (health checks)
+app.MapDefaultEndpoints();
+
+// Map SignalR hub
+app.MapAgentHub();
+
+// Map API endpoints
+app.MapSessionEndpoints();
+app.MapTaskEndpoints();
+app.MapRecipeEndpoints();
+
+app.Run();

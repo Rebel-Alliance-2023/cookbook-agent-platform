@@ -1,0 +1,12 @@
+{
+  "profiles": {
+    "Cookbook.Platform.A2A.Analysis": {
+      "commandName": "Project",
+      "launchBrowser": true,
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      },
+      "applicationUrl": "https://localhost:51566;http://localhost:51570"
+    }
+  }
+}

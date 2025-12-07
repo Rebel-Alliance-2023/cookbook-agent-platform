@@ -1,0 +1,12 @@
+{
+  "profiles": {
+    "Cookbook.Platform.Gateway": {
+      "commandName": "Project",
+      "launchBrowser": true,
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      },
+      "applicationUrl": "https://localhost:51565;http://localhost:51574"
+    }
+  }
+}

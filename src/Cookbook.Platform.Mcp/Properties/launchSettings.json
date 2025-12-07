@@ -1,0 +1,12 @@
+{
+  "profiles": {
+    "Cookbook.Platform.Mcp": {
+      "commandName": "Project",
+      "launchBrowser": true,
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      },
+      "applicationUrl": "https://localhost:51567;http://localhost:51571"
+    }
+  }
+}

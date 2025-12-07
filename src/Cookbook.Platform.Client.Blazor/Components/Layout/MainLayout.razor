@@ -1,0 +1,33 @@
+@inherits LayoutComponentBase
+
+<div class="app-layout">
+    <header class="app-header">
+        <div class="qg-container">
+            <div class="header-content">
+                <a href="" class="app-logo">
+                    <svg class="logo-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+                    </svg>
+                    <span class="logo-text">Cookbook Agent</span>
+                </a>
+                <nav class="app-nav">
+                    <a href="" class="nav-link">Home</a>
+                    <a href="recipes" class="nav-link">Recipes</a>
+                    <a href="timeline" class="nav-link">Timeline</a>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <main class="app-main">
+        <div class="qg-container">
+            @Body
+        </div>
+    </main>
+
+    <footer class="app-footer">
+        <div class="qg-container">
+            <span class="footer-text">Cookbook Agent Platform — Built with .NET Aspire</span>
+        </div>
+    </footer>
+</div>

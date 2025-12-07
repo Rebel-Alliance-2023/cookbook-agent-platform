@@ -1,0 +1,53 @@
+<div class="stream-viewer">
+<div class="stream-header">
+    <svg class="stream-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="2"/>
+        <path d="M16.24 7.76a6 6 0 0 1 0 8.49m-8.48-.01a6 6 0 0 1 0-8.49m11.31-2.82a10 10 0 0 1 0 14.14m-14.14 0a10 10 0 0 1 0-14.14"/>
+    </svg>
+    <h5 class="stream-title">Live Events</h5>
+</div>
+    <div class="stream-body">
+        @if (Events.Any())
+        {
+            @foreach (var evt in Events.Take(20))
+            {
+                <div class="stream-event">
+                    <div class="stream-event-header">
+                        <span class="qg-badge @GetBadgeClass(evt.Type)">@evt.Type</span>
+                        <span class="stream-event-time">@evt.Timestamp.ToLocalTime().ToString("HH:mm:ss")</span>
+                    </div>
+                    <div class="stream-event-payload">
+                        @TruncatePayload(evt.Payload)
+                    </div>
+                </div>
+            }
+        }
+        else
+        {
+            <div class="stream-empty">
+                <p>Waiting for events...</p>
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public List<StreamEvent> Events { get; set; } = new();
+
+    private string GetBadgeClass(string type) => type switch
+    {
+        var t when t.Contains("completed") => "qg-badge-success",
+        var t when t.Contains("failed") => "qg-badge-error",
+        var t when t.Contains("progress") => "qg-badge-info",
+        _ => "qg-badge-neutral"
+    };
+
+    private string TruncatePayload(string payload)
+    {
+        if (string.IsNullOrEmpty(payload))
+            return "";
+        
+        return payload.Length > 100 ? payload.Substring(0, 100) + "..." : payload;
+    }
+}
