@@ -44,6 +44,13 @@ public interface IMessagingBus
 /// </summary>
 public record AgentTask
 {
+    /// <summary>
+    /// Cosmos DB document ID (maps to taskId).
+    /// </summary>
+    [JsonPropertyName("id")]
+    [JsonProperty("id")]
+    public string Id => TaskId;
+    
     [JsonPropertyName("taskId")]
     [JsonProperty("taskId")]
     public required string TaskId { get; init; }
