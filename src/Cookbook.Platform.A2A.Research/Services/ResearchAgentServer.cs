@@ -40,14 +40,17 @@ public class ResearchAgentServer
         _logger.LogInformation("Starting research for task {TaskId}", request.TaskId);
 
         // Parse the query from payload
+        _logger.LogInformation("Parsing payload: {Payload}", request.Payload);
         var payloadDoc = JsonDocument.Parse(request.Payload);
         var query = payloadDoc.RootElement.GetProperty("Query").GetString() ?? "";
+        _logger.LogInformation("Searching for query: '{Query}'", query);
 
         // Stream progress: Searching
         await StreamProgressAsync(request.ThreadId, request.TaskId, "Searching for recipes", 10, cancellationToken);
 
         // Search for recipes using MCP-style tool call simulation
         var recipes = await _recipeRepository.SearchAsync(query, limit: 5, cancellationToken: cancellationToken);
+        _logger.LogInformation("Repository returned {Count} recipes for query '{Query}'", recipes.Count, query);
 
         // Stream progress: Analyzing
         await StreamProgressAsync(request.ThreadId, request.TaskId, "Analyzing candidates", 30, cancellationToken);
@@ -126,9 +129,16 @@ public class ResearchAgentServer
                 MaxTokens = 10
             }, cancellationToken);
 
+            _logger.LogInformation("LLM scored recipe {RecipeId} with response: '{Response}'", recipe.Id, response.Content);
+
             if (double.TryParse(response.Content.Trim(), out var score))
             {
+                _logger.LogInformation("Parsed score for {RecipeId}: {Score}", recipe.Id, score);
                 return Math.Clamp(score, 0.0, 1.0);
+            }
+            else
+            {
+                _logger.LogWarning("Could not parse LLM response as double: '{Response}'", response.Content);
             }
         }
         catch (Exception ex)

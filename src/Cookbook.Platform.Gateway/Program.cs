@@ -13,11 +13,15 @@ builder.AddRedisClient("redis");
 // Add Cosmos DB
 builder.AddAzureCosmosClient("cosmos");
 
+// Add Blob Storage for artifact downloads
+builder.AddAzureBlobClient("blobs");
+
 // Add infrastructure services
 builder.Services.AddMessagingBus(builder.Configuration);
 
 // Add storage services
 builder.Services.AddCosmosRepositories(builder.Configuration);
+builder.Services.AddBlobStorage(builder.Configuration);
 
 // Add CORS for Blazor client
 builder.Services.AddCors(options =>
@@ -55,5 +59,6 @@ app.MapAgentHub();
 app.MapSessionEndpoints();
 app.MapTaskEndpoints();
 app.MapRecipeEndpoints();
+app.MapArtifactEndpoints();
 
 app.Run();

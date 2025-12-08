@@ -37,7 +37,31 @@ public static class InfrastructureServiceExtensions
     public static IServiceCollection AddLlmRouter(this IServiceCollection services, IConfiguration configuration)
     {
         services.Configure<LlmRouterOptions>(configuration.GetSection(LlmRouterOptions.SectionName));
+        
+        // Register a dedicated HttpClient for LLM calls with extended timeouts
+        // (LLM calls can take 30+ seconds, default Polly timeouts are too aggressive)
+        services.AddHttpClient("LlmClient", client =>
+        {
+            client.Timeout = TimeSpan.FromMinutes(5);
+        })
+        .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler())
+        .RemoveAllLoggers(); // Reduce noise from LLM HTTP calls
+        
         services.AddSingleton<ILlmRouter, LlmRouter>();
+
+        return services;
+    }
+
+    /// <summary>
+    /// Adds LLM router services with health check (shows in Aspire Dashboard).
+    /// </summary>
+    public static IServiceCollection AddLlmRouterWithHealthCheck(this IServiceCollection services, IConfiguration configuration)
+    {
+        services.AddLlmRouter(configuration);
+        
+        // Add health check that validates LLM configuration
+        services.AddHealthChecks()
+            .AddCheck<LlmHealthCheck>("llm-providers", tags: ["ready"]);
 
         return services;
     }

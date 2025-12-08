@@ -23,11 +23,20 @@ public class LlmRouter : ILlmRouter
     private readonly HttpClient _httpClient;
     private readonly ResiliencePipeline _resiliencePipeline;
 
-    public LlmRouter(IOptions<LlmRouterOptions> options, ILogger<LlmRouter> logger, IHttpClientFactory? httpClientFactory = null)
+    public LlmRouter(IOptions<LlmRouterOptions> options, ILogger<LlmRouter> logger, IHttpClientFactory httpClientFactory)
     {
         _options = options.Value;
         _logger = logger;
-        _httpClient = httpClientFactory?.CreateClient() ?? new HttpClient();
+        
+        // Use dedicated LLM client with extended timeouts (no aggressive Polly defaults)
+        _httpClient = httpClientFactory.CreateClient("LlmClient");
+
+        // Log configuration for debugging
+        _logger.LogInformation("LlmRouter initialized. DefaultProvider: {DefaultProvider}", _options.DefaultProvider);
+        _logger.LogInformation("OpenAI configured: {OpenAIConfigured}, Model: {OpenAIModel}", 
+            !string.IsNullOrWhiteSpace(_options.OpenAI.ApiKey), _options.OpenAI.Model);
+        _logger.LogInformation("Anthropic configured: {AnthropicConfigured}, Model: {AnthropicModel}", 
+            !string.IsNullOrWhiteSpace(_options.Anthropic.ApiKey), _options.Anthropic.Model);
 
         // Initialize OpenAI client if configured
         if (!string.IsNullOrWhiteSpace(_options.OpenAI.ApiKey))
@@ -161,6 +170,8 @@ public class LlmRouter : ILlmRouter
             throw new InvalidOperationException("Anthropic API key is not configured");
         }
 
+        _logger.LogInformation("Calling Anthropic API with model: {Model}", _options.Anthropic.Model);
+
         var anthropicMessages = request.Messages.Select(m => new
         {
             role = m.Role.Equals("assistant", StringComparison.OrdinalIgnoreCase) ? "assistant" : "user",
@@ -184,7 +195,14 @@ public class LlmRouter : ILlmRouter
         httpRequest.Headers.Add("anthropic-version", "2023-06-01");
 
         var response = await _httpClient.SendAsync(httpRequest, cancellationToken);
-        response.EnsureSuccessStatusCode();
+        
+        if (!response.IsSuccessStatusCode)
+        {
+            var errorContent = await response.Content.ReadAsStringAsync(cancellationToken);
+            _logger.LogError("Anthropic API error. Status: {StatusCode}, Response: {Response}", 
+                response.StatusCode, errorContent);
+            response.EnsureSuccessStatusCode();
+        }
 
         var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
         var anthropicResponse = JsonSerializer.Deserialize<AnthropicResponse>(responseContent, new JsonSerializerOptions

@@ -2,6 +2,7 @@
 @using global::Cookbook.Platform.Shared.Messaging
 @inject SignalRClientService SignalRClient
 @inject ApiClientService ApiClient
+@inject IJSRuntime JS
 @rendermode InteractiveServer
 
 <PageTitle>Cookbook Agent</PageTitle>
@@ -96,7 +97,7 @@
                         <div class="candidate-item">
                             <div class="candidate-header">
                                 <h4 class="candidate-title">@candidate.Name</h4>
-                                <span class="candidate-score">Score: @candidate.Score.ToString("P0")</span>
+                                <span class="candidate-score">Score: @candidate.RelevanceScore.ToString("P0")</span>
                             </div>
                             <p class="candidate-description">@candidate.Description</p>
                             <div class="candidate-tags">
@@ -117,6 +118,88 @@
                 </div>
             </div>
         }
+
+        <!-- Analysis Results -->
+        @if (analysisResult != null)
+        {
+            <div class="qg-card qg-mt-24">
+                <div class="qg-section-header">
+                    <h3 class="qg-section-title">📊 Analysis Results</h3>
+                    <p class="qg-section-description">Nutrition and shopping list for your selected recipe</p>
+                </div>
+
+                @if (analysisResult.Nutrition != null)
+                {
+                    <div class="nutrition-card">
+                        <h4 class="nutrition-title">🥗 Nutrition (per serving)</h4>
+                        <div class="nutrition-grid">
+                            <div class="nutrition-item">
+                                <span class="nutrition-value">@analysisResult.Nutrition.CaloriesPerServing</span>
+                                <span class="nutrition-label">Calories</span>
+                            </div>
+                            <div class="nutrition-item">
+                                <span class="nutrition-value">@analysisResult.Nutrition.ProteinPerServing g</span>
+                                <span class="nutrition-label">Protein</span>
+                            </div>
+                            <div class="nutrition-item">
+                                <span class="nutrition-value">@analysisResult.Nutrition.CarbsPerServing g</span>
+                                <span class="nutrition-label">Carbs</span>
+                            </div>
+                            <div class="nutrition-item">
+                                <span class="nutrition-value">@analysisResult.Nutrition.FatPerServing g</span>
+                                <span class="nutrition-label">Fat</span>
+                            </div>
+                        </div>
+                        <p class="nutrition-servings">Servings: @analysisResult.Nutrition.Servings</p>
+                    </div>
+                }
+
+                @if (analysisResult.ShoppingList.Any())
+                {
+                    <div class="shopping-list-card">
+                        <h4 class="shopping-list-title">🛒 Shopping List</h4>
+                        @foreach (var group in analysisResult.ShoppingList.GroupBy(i => i.Category ?? "Other").OrderBy(g => g.Key))
+                        {
+                            <div class="shopping-category">
+                                <h5 class="shopping-category-title">@group.Key</h5>
+                                <ul class="shopping-items">
+                                    @foreach (var item in group)
+                                    {
+                                        <li class="shopping-item">
+                                            <input type="checkbox" class="shopping-checkbox" />
+                                            <span>@item.Quantity @item.Unit @item.Name</span>
+                                        </li>
+                                    }
+                                </ul>
+                            </div>
+                        }
+                    </div>
+                }
+
+                @if (analysisResult.ArtifactUris.Any())
+                {
+                    <div class="artifacts-card">
+                        <h4 class="artifacts-title">📁 Generated Artifacts</h4>
+                        <p class="artifacts-description">Click to download</p>
+                        <ul class="artifacts-list">
+                            @foreach (var uri in analysisResult.ArtifactUris)
+                            {
+                                var fileName = GetArtifactName(uri);
+                                var taskId = GetTaskIdFromUri(uri);
+                                var icon = GetArtifactIcon(fileName);
+                                <li class="artifact-item">
+                                    <button class="artifact-link" @onclick="() => DownloadArtifact(taskId, fileName)">
+                                        <span class="artifact-icon">@icon</span>
+                                        <span class="artifact-name">@fileName</span>
+                                        <span class="artifact-download-icon">⬇️</span>
+                                    </button>
+                                </li>
+                            }
+                        </ul>
+                    </div>
+                }
+            </div>
+        }
     </div>
 
     <div>
@@ -135,6 +218,7 @@
     private string? threadId;
     private List<RecipeCandidate> candidates = new();
     private List<StreamEvent> events = new();
+    private AnalysisResult? analysisResult;
 
     protected override async Task OnInitializedAsync()
     {
@@ -158,6 +242,7 @@
         errorMessage = null;
         candidates.Clear();
         events.Clear();
+        analysisResult = null;
         currentPhase = "Starting research...";
         progress = 0;
         StateHasChanged();
@@ -207,15 +292,29 @@
             currentPhase = null;
             progress = 100;
             
-            // Parse candidates from result
             try
             {
                 var data = System.Text.Json.JsonDocument.Parse(agentEvent.Payload);
-                if (data.RootElement.TryGetProperty("Result", out var result) &&
-                    result.TryGetProperty("Candidates", out var candidatesJson))
+                if (data.RootElement.TryGetProperty("Result", out var result))
                 {
-                    candidates = System.Text.Json.JsonSerializer.Deserialize<List<RecipeCandidate>>(
-                        candidatesJson.GetRawText()) ?? new();
+                    // Check if this is a Research result (has Candidates)
+                    if (result.TryGetProperty("Candidates", out var candidatesJson))
+                    {
+                        candidates = System.Text.Json.JsonSerializer.Deserialize<List<RecipeCandidate>>(
+                            candidatesJson.GetRawText(), new System.Text.Json.JsonSerializerOptions 
+                            { 
+                                PropertyNameCaseInsensitive = true 
+                            }) ?? new();
+                    }
+                    // Check if this is an Analysis result (has Nutrition or ShoppingList)
+                    else if (result.TryGetProperty("Nutrition", out _) || result.TryGetProperty("ShoppingList", out _))
+                    {
+                        analysisResult = System.Text.Json.JsonSerializer.Deserialize<AnalysisResult>(
+                            result.GetRawText(), new System.Text.Json.JsonSerializerOptions 
+                            { 
+                                PropertyNameCaseInsensitive = true 
+                            });
+                    }
                 }
             }
             catch { }
@@ -244,6 +343,7 @@
     private async Task SelectRecipe(RecipeCandidate candidate)
     {
         isLoading = true;
+        analysisResult = null;
         currentPhase = "Starting analysis...";
         progress = 0;
         StateHasChanged();
@@ -260,6 +360,56 @@
         }
     }
 
+    private string GetArtifactName(string uri)
+    {
+        var parts = uri.Split('/');
+        return parts.Length > 0 ? parts[^1] : uri;
+    }
+
+    private string GetTaskIdFromUri(string uri)
+    {
+        // Extract taskId from the blob URI
+        // URI format: http://127.0.0.1:port/devstoreaccount1/artifacts/{taskId}/{fileName}
+        var parts = uri.Split('/');
+        if (parts.Length >= 2)
+        {
+            return parts[^2];
+        }
+        return "";
+    }
+
+    private string GetArtifactIcon(string fileName)
+    {
+        if (fileName.EndsWith(".md"))
+            return "📄";
+        if (fileName.EndsWith(".json"))
+            return "📋";
+        return "📁";
+    }
+
+    private async Task DownloadArtifact(string taskId, string fileName)
+    {
+        try
+        {
+            var content = await ApiClient.DownloadArtifactAsync(taskId, fileName);
+            if (content != null)
+            {
+                // Use JS interop to trigger browser download
+                var base64 = Convert.ToBase64String(content);
+                var mimeType = fileName.EndsWith(".json") ? "application/json" : "text/markdown";
+                await JS.InvokeVoidAsync("downloadFile", fileName, base64, mimeType);
+            }
+            else
+            {
+                errorMessage = $"Failed to download {fileName}";
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Download error: {ex.Message}";
+        }
+    }
+
     public void Dispose()
     {
         SignalRClient.OnEvent -= HandleEvent;
@@ -272,6 +422,31 @@
         public string? Description { get; init; }
         public string? Cuisine { get; init; }
         public string? DietType { get; init; }
-        public double Score { get; init; }
+        public double RelevanceScore { get; init; }
+    }
+
+    private record AnalysisResult
+    {
+        public string RecipeId { get; init; } = "";
+        public NutritionSummary? Nutrition { get; init; }
+        public List<ShoppingListItem> ShoppingList { get; init; } = new();
+        public List<string> ArtifactUris { get; init; } = new();
+    }
+
+    private record NutritionSummary
+    {
+        public double CaloriesPerServing { get; init; }
+        public double ProteinPerServing { get; init; }
+        public double CarbsPerServing { get; init; }
+        public double FatPerServing { get; init; }
+        public int Servings { get; init; }
+    }
+
+    private record ShoppingListItem
+    {
+        public string Name { get; init; } = "";
+        public double Quantity { get; init; }
+        public string? Unit { get; init; }
+        public string? Category { get; init; }
     }
 }

@@ -43,12 +43,36 @@ public class AnalysisAgentServer
     public async Task<AnalysisResult> ExecuteAsync(AnalysisRequest request, CancellationToken cancellationToken)
     {
         _logger.LogInformation("Starting analysis for task {TaskId}", request.TaskId);
+        _logger.LogInformation("Analysis payload: {Payload}", request.Payload);
 
-        // Parse the recipe ID from payload
+        // Parse the recipe ID from payload (try multiple property names for compatibility)
         var payloadDoc = JsonDocument.Parse(request.Payload);
-        var recipeId = payloadDoc.RootElement.TryGetProperty("RecipeId", out var ridProp) 
-            ? ridProp.GetString() ?? "" 
-            : "";
+        var recipeId = "";
+        
+        // Try different property name variations
+        if (payloadDoc.RootElement.TryGetProperty("RecipeId", out var ridProp1))
+        {
+            recipeId = ridProp1.GetString() ?? "";
+        }
+        else if (payloadDoc.RootElement.TryGetProperty("recipeId", out var ridProp2))
+        {
+            recipeId = ridProp2.GetString() ?? "";
+        }
+        else if (payloadDoc.RootElement.TryGetProperty("Id", out var ridProp3))
+        {
+            recipeId = ridProp3.GetString() ?? "";
+        }
+        else if (payloadDoc.RootElement.TryGetProperty("id", out var ridProp4))
+        {
+            recipeId = ridProp4.GetString() ?? "";
+        }
+
+        _logger.LogInformation("Parsed recipeId: '{RecipeId}'", recipeId);
+
+        if (string.IsNullOrWhiteSpace(recipeId))
+        {
+            throw new InvalidOperationException($"RecipeId not found in payload: {request.Payload}");
+        }
 
         // Stream progress: Loading recipe
         await StreamProgressAsync(request.ThreadId, request.TaskId, "Loading recipe", 10, cancellationToken);
@@ -91,13 +115,23 @@ public class AnalysisAgentServer
 
         // Generate shopping list as JSON
         var shoppingListJson = JsonSerializer.Serialize(shoppingList, new JsonSerializerOptions { WriteIndented = true });
-        var shoppingListUri = await StoreArtifactAsync(
+        var shoppingListJsonUri = await StoreArtifactAsync(
             request.TaskId,
             $"shopping-list-{recipeId}.json",
             shoppingListJson,
             "application/json",
             cancellationToken);
-        artifactUris.Add(shoppingListUri);
+        artifactUris.Add(shoppingListJsonUri);
+
+        // Generate shopping list as Markdown (nicely formatted for download)
+        var shoppingListMarkdown = GenerateShoppingListMarkdown(recipe.Name, shoppingList);
+        var shoppingListMdUri = await StoreArtifactAsync(
+            request.TaskId,
+            $"shopping-list-{recipeId}.md",
+            shoppingListMarkdown,
+            "text/markdown",
+            cancellationToken);
+        artifactUris.Add(shoppingListMdUri);
 
         // Stream progress: Complete
         await StreamProgressAsync(request.ThreadId, request.TaskId, "Analysis complete", 100, cancellationToken);
@@ -115,6 +149,9 @@ public class AnalysisAgentServer
 
     private NutritionSummary ComputeNutrition(Recipe recipe)
     {
+        _logger.LogInformation("Computing nutrition for recipe {RecipeId} with {IngredientCount} ingredients", 
+            recipe.Id, recipe.Ingredients.Count);
+
         // Simplified nutrition estimation
         var totalCalories = 0.0;
         var totalProtein = 0.0;
@@ -123,6 +160,7 @@ public class AnalysisAgentServer
 
         foreach (var ingredient in recipe.Ingredients)
         {
+            _logger.LogDebug("Processing ingredient: {Name}, Quantity: {Qty}", ingredient.Name, ingredient.Quantity);
             var (cal, pro, carb, fat) = EstimateIngredientNutrition(ingredient);
             totalCalories += cal;
             totalProtein += pro;
@@ -131,6 +169,9 @@ public class AnalysisAgentServer
         }
 
         var servings = recipe.Servings > 0 ? recipe.Servings : 1;
+
+        _logger.LogInformation("Nutrition totals - Calories: {Cal}, Protein: {Pro}, Carbs: {Carb}, Fat: {Fat}, Servings: {Servings}",
+            totalCalories, totalProtein, totalCarbs, totalFat, servings);
 
         return new NutritionSummary
         {
@@ -282,6 +323,43 @@ Categories: Produce, Meat, Dairy, Pantry, Spices, Other",
             }
             sb.AppendLine();
         }
+
+        return sb.ToString();
+    }
+
+    private string GenerateShoppingListMarkdown(string recipeName, List<ShoppingListItem> shoppingList)
+    {
+        var sb = new StringBuilder();
+        
+        sb.AppendLine($"# Shopping List");
+        sb.AppendLine();
+        sb.AppendLine($"**Recipe:** {recipeName}");
+        sb.AppendLine();
+        sb.AppendLine($"**Generated:** {DateTime.UtcNow:MMMM dd, yyyy}");
+        sb.AppendLine();
+        sb.AppendLine("---");
+        sb.AppendLine();
+
+        var groupedItems = shoppingList.GroupBy(i => i.Category ?? "Other").OrderBy(g => g.Key);
+        
+        foreach (var group in groupedItems)
+        {
+            sb.AppendLine($"## {group.Key}");
+            sb.AppendLine();
+            
+            foreach (var item in group)
+            {
+                var quantity = item.Quantity > 0 ? $"{item.Quantity}" : "";
+                var unit = !string.IsNullOrWhiteSpace(item.Unit) ? $" {item.Unit}" : "";
+                sb.AppendLine($"- [ ] {quantity}{unit} {item.Name}");
+            }
+            
+            sb.AppendLine();
+        }
+
+        sb.AppendLine("---");
+        sb.AppendLine();
+        sb.AppendLine("*Generated by Cookbook Agent Platform*");
 
         return sb.ToString();
     }

@@ -31,6 +31,10 @@ public class TaskProcessorService : BackgroundService
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         _logger.LogInformation("Task processor service starting");
+        _logger.LogInformation("Redis connected: {IsConnected}", _redis.IsConnected);
+        _logger.LogInformation("Redis stream prefix: {Prefix}", _options.RedisStreamPrefix);
+        _logger.LogInformation("Redis key prefix: {Prefix}", _options.RedisKeyPrefix);
+        _logger.LogInformation("Redis DB: {Db}", _options.RedisDb);
 
         var db = _redis.GetDatabase(_options.RedisDb);
         var consumerGroup = "orchestrator";
@@ -48,12 +52,16 @@ public class TaskProcessorService : BackgroundService
             try
             {
                 await db.StreamCreateConsumerGroupAsync(stream, consumerGroup, "0-0", createStream: true);
+                _logger.LogInformation("Created consumer group {Group} for stream {Stream}", consumerGroup, stream);
             }
             catch (RedisServerException ex) when (ex.Message.Contains("BUSYGROUP"))
             {
                 // Consumer group already exists
+                _logger.LogInformation("Consumer group {Group} already exists for stream {Stream}", consumerGroup, stream);
             }
         }
+
+        _logger.LogInformation("Task processor entering main loop, polling streams: {Streams}", string.Join(", ", streams));
 
         while (!stoppingToken.IsCancellationRequested)
         {

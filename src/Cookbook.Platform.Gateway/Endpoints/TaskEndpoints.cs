@@ -45,12 +45,25 @@ public static class TaskEndpoints
         TaskRepository taskRepository,
         CancellationToken cancellationToken)
     {
+        // Determine payload based on whether Query is already JSON or a plain string
+        string payload;
+        if (request.Query.TrimStart().StartsWith("{") || request.Query.TrimStart().StartsWith("["))
+        {
+            // Already JSON (e.g., for Analysis tasks with RecipeId)
+            payload = request.Query;
+        }
+        else
+        {
+            // Plain string query (e.g., for Research tasks)
+            payload = JsonSerializer.Serialize(new { Query = request.Query });
+        }
+
         var task = new AgentTask
         {
             TaskId = Guid.NewGuid().ToString(),
             ThreadId = request.ThreadId,
             AgentType = request.AgentType,
-            Payload = JsonSerializer.Serialize(new { Query = request.Query }),
+            Payload = payload,
             CreatedAt = DateTime.UtcNow
         };
 

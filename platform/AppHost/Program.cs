@@ -24,7 +24,7 @@ var storage = builder.AddAzureStorage("storage")
 
 var blobs = storage.AddBlobs("blobs");
 
-// MCP Server - Cookbook Tools
+// MCP Server - Cookbook Tools (handles database seeding)
 var mcpServer = builder.AddProject<Projects.Cookbook_Platform_Mcp>("mcp-server")
     .WithReference(cosmosDb)
     .WithReference(blobs)
@@ -33,14 +33,16 @@ var mcpServer = builder.AddProject<Projects.Cookbook_Platform_Mcp>("mcp-server")
     .WaitFor(cosmos)
     .WaitFor(storage);
 
-// A2A Agents
+// A2A Agents - wait for infrastructure (not MCP, since agents don't call MCP directly)
 var researchAgent = builder.AddProject<Projects.Cookbook_Platform_A2A_Research>("research-agent")
     .WithReference(redis)
     .WithReference(cosmosDb)
     .WithEnvironment("Llm__OpenAI__ApiKey", openAiApiKey)
     .WithEnvironment("Llm__Anthropic__ApiKey", anthropicApiKey)
     .WithExternalHttpEndpoints()
-    .WaitFor(mcpServer);
+    .WaitFor(redis)
+    .WaitFor(cosmos)
+    .WaitFor(mcpServer);  // Wait for MCP to seed the database
 
 var analysisAgent = builder.AddProject<Projects.Cookbook_Platform_A2A_Analysis>("analysis-agent")
     .WithReference(redis)
@@ -49,7 +51,10 @@ var analysisAgent = builder.AddProject<Projects.Cookbook_Platform_A2A_Analysis>(
     .WithEnvironment("Llm__OpenAI__ApiKey", openAiApiKey)
     .WithEnvironment("Llm__Anthropic__ApiKey", anthropicApiKey)
     .WithExternalHttpEndpoints()
-    .WaitFor(mcpServer);
+    .WaitFor(redis)
+    .WaitFor(cosmos)
+    .WaitFor(storage)
+    .WaitFor(mcpServer);  // Wait for MCP to seed the database
 
 // Orchestrator Service
 var orchestrator = builder.AddProject<Projects.Cookbook_Platform_Orchestrator>("orchestrator")
@@ -58,7 +63,6 @@ var orchestrator = builder.AddProject<Projects.Cookbook_Platform_Orchestrator>("
     .WithReference(blobs)
     .WithReference(researchAgent)
     .WithReference(analysisAgent)
-    .WithReference(mcpServer)
     .WithEnvironment("Llm__OpenAI__ApiKey", openAiApiKey)
     .WithEnvironment("Llm__Anthropic__ApiKey", anthropicApiKey)
     .WaitFor(researchAgent)
@@ -68,6 +72,7 @@ var orchestrator = builder.AddProject<Projects.Cookbook_Platform_Orchestrator>("
 var gateway = builder.AddProject<Projects.Cookbook_Platform_Gateway>("gateway")
     .WithReference(redis)
     .WithReference(cosmosDb)
+    .WithReference(blobs)
     .WithReference(orchestrator)
     .WithExternalHttpEndpoints()
     .WaitFor(orchestrator);

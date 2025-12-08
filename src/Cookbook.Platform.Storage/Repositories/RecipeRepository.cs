@@ -38,23 +38,28 @@ public class RecipeRepository
 
         if (!string.IsNullOrWhiteSpace(query))
         {
-            queryBuilder.Add("AND (CONTAINS(LOWER(c.Name), LOWER(@query)) OR CONTAINS(LOWER(c.Description), LOWER(@query)))");
+            // Use lowercase property names to match JSON serialization (JsonPropertyName attributes)
+            queryBuilder.Add("AND (CONTAINS(LOWER(c.name), LOWER(@query)) OR CONTAINS(LOWER(c.description), LOWER(@query)))");
             parameters.Add(("@query", query));
         }
 
         if (!string.IsNullOrWhiteSpace(diet))
         {
-            queryBuilder.Add("AND LOWER(c.DietType) = LOWER(@diet)");
+            queryBuilder.Add("AND LOWER(c.dietType) = LOWER(@diet)");
             parameters.Add(("@diet", diet));
         }
 
         if (!string.IsNullOrWhiteSpace(cuisine))
         {
-            queryBuilder.Add("AND LOWER(c.Cuisine) = LOWER(@cuisine)");
+            queryBuilder.Add("AND LOWER(c.cuisine) = LOWER(@cuisine)");
             parameters.Add(("@cuisine", cuisine));
         }
 
-        var queryDef = new QueryDefinition(string.Join(" ", queryBuilder));
+        var queryText = string.Join(" ", queryBuilder);
+        _logger.LogInformation("Executing Cosmos query: {Query} with parameters: {Parameters}", 
+            queryText, string.Join(", ", parameters.Select(p => $"{p.Item1}={p.Item2}")));
+
+        var queryDef = new QueryDefinition(queryText);
         foreach (var (name, value) in parameters)
         {
             queryDef = queryDef.WithParameter(name, value);
@@ -66,9 +71,11 @@ public class RecipeRepository
         while (iterator.HasMoreResults)
         {
             var response = await iterator.ReadNextAsync(cancellationToken);
+            _logger.LogInformation("Cosmos returned {Count} items in this batch", response.Count);
             results.AddRange(response);
         }
 
+        _logger.LogInformation("Total recipes found: {Count}", results.Count);
         return results;
     }
 

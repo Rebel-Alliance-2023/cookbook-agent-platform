@@ -20,6 +20,36 @@ public class ApiClientService
     private HttpClient CreateClient() => _httpClientFactory.CreateClient("GatewayApi");
 
     /// <summary>
+    /// Gets the Gateway API base URL for constructing download links.
+    /// </summary>
+    public string GetGatewayBaseUrl()
+    {
+        var client = CreateClient();
+        return client.BaseAddress?.ToString().TrimEnd('/') ?? "";
+    }
+
+    /// <summary>
+    /// Downloads an artifact and returns its content.
+    /// </summary>
+    public async Task<byte[]?> DownloadArtifactAsync(string taskId, string fileName)
+    {
+        var client = CreateClient();
+        try
+        {
+            var response = await client.GetAsync($"/api/artifacts/{taskId}/{fileName}");
+            if (response.IsSuccessStatusCode)
+            {
+                return await response.Content.ReadAsByteArrayAsync();
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to download artifact {FileName} for task {TaskId}", fileName, taskId);
+        }
+        return null;
+    }
+
+    /// <summary>
     /// Creates a new session and returns the thread ID.
     /// </summary>
     public async Task<string> CreateSessionAsync()

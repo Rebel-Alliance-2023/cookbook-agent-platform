@@ -167,7 +167,9 @@ public record RecipeCandidate
     public required string Id { get; init; }
     public required string Name { get; init; }
     public string? Description { get; init; }
-    public double Score { get; init; }
+    public string? Cuisine { get; init; }
+    public string? DietType { get; init; }
+    public double RelevanceScore { get; init; }
 }
 
 /// <summary>
@@ -197,8 +199,9 @@ public record ShoppingListItem
 /// </summary>
 public record NutritionSummary
 {
-    public double Calories { get; init; }
-    public double Protein { get; init; }
-    public double Carbs { get; init; }
-    public double Fat { get; init; }
+    public double CaloriesPerServing { get; init; }
+    public double ProteinPerServing { get; init; }
+    public double CarbsPerServing { get; init; }
+    public double FatPerServing { get; init; }
+    public int Servings { get; init; }
 }

@@ -1,6 +1,7 @@
 using Cookbook.Platform.Infrastructure;
 using Cookbook.Platform.Orchestrator.Services;
 using Cookbook.Platform.Storage;
+using Microsoft.Extensions.Http.Resilience;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -29,16 +30,20 @@ builder.Services.AddSingleton<OrchestratorService>();
 builder.Services.AddSingleton<AgentPipeline>();
 builder.Services.AddHostedService<TaskProcessorService>();
 
-// Add HTTP clients for A2A agents
+// Add HTTP clients for A2A agents with service discovery
 builder.Services.AddHttpClient("ResearchAgent", client =>
 {
     client.BaseAddress = new Uri("http://research-agent");
-});
+    client.Timeout = TimeSpan.FromMinutes(5);
+})
+.AddServiceDiscovery();
 
 builder.Services.AddHttpClient("AnalysisAgent", client =>
 {
     client.BaseAddress = new Uri("http://analysis-agent");
-});
+    client.Timeout = TimeSpan.FromMinutes(5);
+})
+.AddServiceDiscovery();
 
 var app = builder.Build();
 

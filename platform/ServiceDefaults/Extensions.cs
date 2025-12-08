@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
+using Microsoft.Extensions.Http.Resilience;
 using Microsoft.Extensions.Logging;
 using OpenTelemetry;
 using OpenTelemetry.Metrics;
@@ -18,7 +19,15 @@ public static class Extensions
         builder.Services.AddServiceDiscovery();
         builder.Services.ConfigureHttpClientDefaults(http =>
         {
-            http.AddStandardResilienceHandler();
+            // Configure resilience with extended timeouts for LLM and agent calls
+            http.AddStandardResilienceHandler(options =>
+            {
+                // LLM calls and agent calls can take 30+ seconds
+                options.AttemptTimeout.Timeout = TimeSpan.FromMinutes(2);
+                options.TotalRequestTimeout.Timeout = TimeSpan.FromMinutes(5);
+                // Circuit breaker sampling duration must be at least double the attempt timeout
+                options.CircuitBreaker.SamplingDuration = TimeSpan.FromMinutes(5);
+            });
             http.AddServiceDiscovery();
         });
 

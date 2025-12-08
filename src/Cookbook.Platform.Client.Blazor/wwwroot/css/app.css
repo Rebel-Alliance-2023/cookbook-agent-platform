@@ -546,3 +546,207 @@
     color: var(--color-text-tertiary);
     margin: 0;
 }
+
+/* ============================================================================
+   ANALYSIS RESULTS
+   ========================================================================= */
+
+.qg-mt-24 {
+    margin-top: var(--space-24);
+}
+
+/* Nutrition Card */
+.nutrition-card {
+    background-color: var(--color-canvas);
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--card-radius);
+    padding: var(--space-16);
+    margin-bottom: var(--space-16);
+}
+
+.nutrition-title {
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text-primary);
+    margin: 0 0 var(--space-16) 0;
+}
+
+.nutrition-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--space-12);
+    margin-bottom: var(--space-12);
+}
+
+@media (max-width: 600px) {
+    .nutrition-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+.nutrition-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: var(--space-12);
+    background-color: var(--color-surface);
+    border-radius: var(--card-radius);
+    border: 1px solid var(--color-border-subtle);
+}
+
+.nutrition-value {
+    font-size: var(--font-size-xl);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-accent-primary);
+}
+
+.nutrition-label {
+    font-size: var(--font-size-xs);
+    color: var(--color-text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.nutrition-servings {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-secondary);
+    margin: 0;
+    text-align: center;
+}
+
+/* Shopping List Card */
+.shopping-list-card {
+    background-color: var(--color-canvas);
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--card-radius);
+    padding: var(--space-16);
+    margin-bottom: var(--space-16);
+}
+
+.shopping-list-title {
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text-primary);
+    margin: 0 0 var(--space-16) 0;
+}
+
+.shopping-category {
+    margin-bottom: var(--space-16);
+}
+
+.shopping-category:last-child {
+    margin-bottom: 0;
+}
+
+.shopping-category-title {
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text-secondary);
+    margin: 0 0 var(--space-8) 0;
+    padding-bottom: var(--space-4);
+    border-bottom: 1px solid var(--color-border-subtle);
+}
+
+.shopping-items {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.shopping-item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-8);
+    padding: var(--space-8) 0;
+    font-size: var(--font-size-sm);
+    color: var(--color-text-primary);
+    border-bottom: 1px solid var(--color-border-subtle);
+}
+
+.shopping-item:last-child {
+    border-bottom: none;
+}
+
+.shopping-checkbox {
+    width: 16px;
+    height: 16px;
+    accent-color: var(--color-accent-primary);
+}
+
+/* Artifacts Card */
+.artifacts-card {
+    background-color: var(--color-canvas);
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--card-radius);
+    padding: var(--space-16);
+}
+
+.artifacts-title {
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text-primary);
+    margin: 0 0 var(--space-4) 0;
+}
+
+.artifacts-description {
+    font-size: var(--font-size-xs);
+    color: var(--color-text-tertiary);
+    margin: 0 0 var(--space-12) 0;
+}
+
+.artifacts-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-8);
+}
+
+.artifact-item {
+    display: block;
+}
+
+.artifact-link {
+    display: flex;
+    align-items: center;
+    gap: var(--space-8);
+    padding: var(--space-12);
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--card-radius);
+    text-decoration: none;
+    color: var(--color-text-primary);
+    transition: all var(--duration-fast) var(--ease-in-out);
+    cursor: pointer;
+    width: 100%;
+    text-align: left;
+    font-family: inherit;
+}
+
+.artifact-link:hover {
+    border-color: var(--color-accent-primary);
+    background-color: var(--color-info-subtle);
+    transform: translateY(-1px);
+}
+
+.artifact-icon {
+    font-size: var(--font-size-lg);
+}
+
+.artifact-name {
+    font-size: var(--font-size-sm);
+    font-family: var(--font-mono);
+    flex: 1;
+}
+
+.artifact-download-icon {
+    font-size: var(--font-size-sm);
+    opacity: 0.6;
+}
+
+.qg-badge-info {
+    background-color: var(--color-info-subtle);
+    color: var(--color-info);
+    border: 1px solid var(--color-info-border);
+}
