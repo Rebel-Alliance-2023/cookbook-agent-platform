@@ -1,5 +1,6 @@
 using System.Text.Json.Serialization;
 using Newtonsoft.Json;
+using Cookbook.Platform.Shared.Models.Ingest;
 
 namespace Cookbook.Platform.Shared.Models;
 
@@ -67,6 +68,13 @@ public record Recipe
     [JsonPropertyName("updatedAt")]
     [JsonProperty("updatedAt")]
     public DateTime? UpdatedAt { get; init; }
+
+    /// <summary>
+    /// Provenance information for recipes imported from external sources.
+    /// </summary>
+    [JsonPropertyName("source")]
+    [JsonProperty("source")]
+    public RecipeSource? Source { get; init; }
 }
 
 /// <summary>
@@ -124,3 +132,4 @@ public record NutritionInfo
     [JsonProperty("sugarGrams")]
     public double SugarGrams { get; init; }
 }
+

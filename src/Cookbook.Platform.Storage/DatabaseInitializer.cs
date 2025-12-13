@@ -1,5 +1,7 @@
 using System.Text.Json;
 using Cookbook.Platform.Shared.Models;
+using Cookbook.Platform.Shared.Models.Prompts;
+using Cookbook.Platform.Shared.Prompts.Templates;
 using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -24,7 +26,8 @@ public class DatabaseInitializer : IHostedService
         ("messages", "/threadId"),
         ("tasks", "/taskId"),
         ("artifacts", "/taskId"),
-        ("notes", "/threadId")
+        ("notes", "/threadId"),
+        ("prompts", "/phase")
     ];
 
     public DatabaseInitializer(
@@ -65,6 +68,9 @@ public class DatabaseInitializer : IHostedService
 
             // Seed recipes if the container is empty
             await SeedRecipesAsync(database, cancellationToken);
+
+            // Seed prompts if the container is empty
+            await SeedPromptsAsync(database, cancellationToken);
 
             _logger.LogInformation("Database initialization completed successfully");
         }
@@ -117,6 +123,64 @@ public class DatabaseInitializer : IHostedService
         }
 
         _logger.LogInformation("Successfully seeded {Count} recipes", seedData.Count);
+    }
+
+    private async Task SeedPromptsAsync(Database database, CancellationToken cancellationToken)
+    {
+        var container = database.GetContainer("prompts");
+
+        // Check if prompts already exist for the Extract phase
+        var query = new QueryDefinition("SELECT VALUE COUNT(1) FROM c WHERE c.phase = @phase")
+            .WithParameter("@phase", IngestPromptTemplates.ExtractPhase);
+
+        using var iterator = container.GetItemQueryIterator<int>(query);
+        var response = await iterator.ReadNextAsync(cancellationToken);
+        var count = response.FirstOrDefault();
+
+        if (count > 0)
+        {
+            _logger.LogInformation("Prompts container already has {Count} extract prompts, skipping seed", count);
+            return;
+        }
+
+        _logger.LogInformation("Seeding prompt templates...");
+
+        var extractPrompt = new PromptTemplate
+        {
+            Id = "ingest.extract.v1",
+            Name = "Ingest Extract v1",
+            Phase = IngestPromptTemplates.ExtractPhase,
+            Version = 1,
+            IsActive = true,
+            SystemPrompt = IngestPromptTemplates.ExtractV1SystemPrompt,
+            UserPromptTemplate = IngestPromptTemplates.ExtractV1UserPromptTemplate,
+            RequiredVariables = [.. IngestPromptTemplates.ExtractRequiredVariables],
+            OptionalVariables = [.. IngestPromptTemplates.ExtractOptionalVariables],
+            Constraints = new Dictionary<string, string>
+            {
+                ["maxContentChars"] = "60000",
+                ["outputFormat"] = "json"
+            },
+            MaxTokens = 4000,
+            CreatedAt = DateTime.UtcNow,
+            CreatedBy = "system"
+        };
+
+        try
+        {
+            await container.CreateItemAsync(
+                extractPrompt,
+                new PartitionKey(extractPrompt.Phase),
+                cancellationToken: cancellationToken);
+
+            _logger.LogInformation("Seeded prompt template: {PromptId}", extractPrompt.Id);
+        }
+        catch (CosmosException ex) when (ex.StatusCode == System.Net.HttpStatusCode.Conflict)
+        {
+            _logger.LogDebug("Prompt {PromptId} already exists, skipping", extractPrompt.Id);
+        }
+
+        _logger.LogInformation("Successfully seeded prompt templates");
     }
 
     private async Task<List<Recipe>?> LoadSeedDataAsync(CancellationToken cancellationToken)

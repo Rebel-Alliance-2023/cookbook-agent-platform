@@ -26,6 +26,7 @@ public static class StorageServiceExtensions
         services.AddSingleton<TaskRepository>();
         services.AddSingleton<ArtifactRepository>();
         services.AddSingleton<NotesRepository>();
+        services.AddSingleton<IPromptRepository, CosmosPromptRepository>();
 
         return services;
     }
@@ -53,3 +54,4 @@ public static class StorageServiceExtensions
         return services;
     }
 }
+

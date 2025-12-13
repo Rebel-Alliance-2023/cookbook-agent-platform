@@ -60,5 +60,7 @@ app.MapSessionEndpoints();
 app.MapTaskEndpoints();
 app.MapRecipeEndpoints();
 app.MapArtifactEndpoints();
+app.MapPromptEndpoints();
 
 app.Run();
+

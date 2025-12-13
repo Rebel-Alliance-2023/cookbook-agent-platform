@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Cookbook.Platform.Shared.Agents;
 using Cookbook.Platform.Shared.Messaging;
 using Cookbook.Platform.Storage.Repositories;
 
@@ -45,6 +46,20 @@ public static class TaskEndpoints
         TaskRepository taskRepository,
         CancellationToken cancellationToken)
     {
+        // Validate agent type
+        if (!KnownAgentTypes.IsValid(request.AgentType))
+        {
+            return Results.BadRequest(new
+            {
+                error = "INVALID_AGENT_TYPE",
+                message = $"Unknown agent type '{request.AgentType}'. Valid types are: {string.Join(", ", KnownAgentTypes.All)}",
+                validTypes = KnownAgentTypes.All
+            });
+        }
+
+        // Normalize agent type to canonical casing
+        var agentType = KnownAgentTypes.GetCanonical(request.AgentType) ?? request.AgentType;
+
         // Determine payload based on whether Query is already JSON or a plain string
         string payload;
         if (request.Query.TrimStart().StartsWith("{") || request.Query.TrimStart().StartsWith("["))
@@ -62,7 +77,7 @@ public static class TaskEndpoints
         {
             TaskId = Guid.NewGuid().ToString(),
             ThreadId = request.ThreadId,
-            AgentType = request.AgentType,
+            AgentType = agentType,
             Payload = payload,
             CreatedAt = DateTime.UtcNow
         };
