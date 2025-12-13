@@ -42,6 +42,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Features", "Features", "{AE
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Plans", "Plans", "{F5B58423-E6C2-47F2-91FC-61DBA623A84F}"
 	ProjectSection(SolutionItems) = preProject
+		docs\Implementation Plans\Implementation Plan A - Recipe Ingest Agent (Updated - Dual Search Providers).md = docs\Implementation Plans\Implementation Plan A - Recipe Ingest Agent (Updated - Dual Search Providers).md
 		docs\Implementation Plans\Implementation Plan A - Recipe Ingest Agent.md = docs\Implementation Plans\Implementation Plan A - Recipe Ingest Agent.md
 	EndProjectSection
 EndProject
