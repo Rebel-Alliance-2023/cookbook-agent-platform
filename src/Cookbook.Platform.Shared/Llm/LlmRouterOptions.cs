@@ -8,7 +8,7 @@ public class LlmRouterOptions
     public const string SectionName = "Llm";
 
     /// <summary>
-    /// Default LLM provider (OpenAI or Claude/Anthropic).
+    /// Default LLM provider (OpenAI, Claude/Anthropic, or Gemini).
     /// </summary>
     public string DefaultProvider { get; set; } = "Claude";
 
@@ -21,6 +21,11 @@ public class LlmRouterOptions
     /// Anthropic/Claude provider configuration.
     /// </summary>
     public AnthropicOptions Anthropic { get; set; } = new();
+
+    /// <summary>
+    /// Google Gemini provider configuration.
+    /// </summary>
+    public GeminiOptions Gemini { get; set; } = new();
 
     /// <summary>
     /// Phase-specific provider overrides.
@@ -49,5 +54,15 @@ public class AnthropicOptions
 {
     public string? ApiKey { get; set; }
     public string Model { get; set; } = "claude-sonnet-4-20250514";
+    public string? BaseUrl { get; set; }
+}
+
+/// <summary>
+/// Google Gemini provider configuration.
+/// </summary>
+public class GeminiOptions
+{
+    public string? ApiKey { get; set; }
+    public string Model { get; set; } = "gemini-2.5-flash";
     public string? BaseUrl { get; set; }
 }
