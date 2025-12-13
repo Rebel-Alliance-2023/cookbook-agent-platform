@@ -1,5 +1,6 @@
 using System.Net.Http.Json;
 using Cookbook.Platform.Shared.Models;
+using Cookbook.Platform.Shared.Models.Ingest;
 
 namespace Cookbook.Platform.Client.Blazor.Services;
 
@@ -83,6 +84,31 @@ public class ApiClientService
     }
 
     /// <summary>
+    /// Creates a new ingest task for importing a recipe from URL.
+    /// </summary>
+    public async Task<CreateIngestTaskResponse> CreateIngestTaskAsync(string url, string? threadId = null)
+    {
+        var client = CreateClient();
+        var request = new
+        {
+            AgentType = "Ingest",
+            ThreadId = threadId,
+            Payload = new
+            {
+                Mode = "Url",
+                Url = url
+            }
+        };
+
+        var response = await client.PostAsJsonAsync("/api/tasks/ingest", request);
+        response.EnsureSuccessStatusCode();
+
+        var result = await response.Content.ReadFromJsonAsync<CreateIngestTaskResponse>();
+        _logger.LogInformation("Created ingest task {TaskId} for URL {Url}", result?.TaskId, url);
+        return result ?? throw new InvalidOperationException("Failed to create ingest task");
+    }
+
+    /// <summary>
     /// Searches for recipes.
     /// </summary>
     public async Task<List<RecipeListItem>> SearchRecipesAsync(string? query = null, string? diet = null, string? cuisine = null)
@@ -123,6 +149,42 @@ public class ApiClientService
         return await client.GetFromJsonAsync<TaskStateResponse>($"/api/tasks/{taskId}/state");
     }
 
+    /// <summary>
+    /// Gets a recipe draft for review.
+    /// </summary>
+    public async Task<RecipeDraft?> GetRecipeDraftAsync(string taskId)
+    {
+        var client = CreateClient();
+        try
+        {
+            return await client.GetFromJsonAsync<RecipeDraft>($"/api/tasks/{taskId}/draft");
+        }
+        catch (HttpRequestException ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
+        {
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Commits a recipe draft, adding it to the cookbook.
+    /// </summary>
+    public async Task<bool> CommitRecipeDraftAsync(string taskId)
+    {
+        var client = CreateClient();
+        var response = await client.PostAsync($"/api/tasks/{taskId}/commit", null);
+        return response.IsSuccessStatusCode;
+    }
+
+    /// <summary>
+    /// Rejects a recipe draft.
+    /// </summary>
+    public async Task<bool> RejectRecipeDraftAsync(string taskId, string? reason = null)
+    {
+        var client = CreateClient();
+        var response = await client.PostAsJsonAsync($"/api/tasks/{taskId}/reject", new { Reason = reason });
+        return response.IsSuccessStatusCode;
+    }
+
     private record SessionResponse(string Id, string ThreadId);
     
     public record TaskResponse(string TaskId, string ThreadId, string AgentType);
@@ -139,3 +201,4 @@ public class ApiClientService
         int CookTimeMinutes,
         int Servings);
 }
+

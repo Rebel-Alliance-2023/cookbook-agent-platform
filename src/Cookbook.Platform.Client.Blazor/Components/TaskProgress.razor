@@ -1,0 +1,448 @@
+@using global::Cookbook.Platform.Shared.Messaging
+@inject SignalRClientService SignalRClient
+@inject ApiClientService ApiClient
+@inject ILogger<TaskProgress> Logger
+@implements IDisposable
+
+<div class="qg-card task-progress-card">
+    <div class="qg-section-header">
+        <h3 class="qg-section-title">Import Progress</h3>
+    </div>
+
+    @if (isFailed)
+    {
+        <div class="progress-error">
+            <div class="error-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"/>
+                    <line x1="15" y1="9" x2="9" y2="15"/>
+                    <line x1="9" y1="9" x2="15" y2="15"/>
+                </svg>
+            </div>
+            <div class="error-content">
+                <h4>Import Failed</h4>
+                <p>@errorMessage</p>
+                @if (!string.IsNullOrEmpty(errorCode))
+                {
+                    <code class="error-code">@errorCode</code>
+                }
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="progress-phases">
+            @foreach (var phase in phases)
+            {
+                <div class="phase-item @GetPhaseClass(phase)">
+                    <div class="phase-indicator">
+                        @if (phase.Status == PhaseStatus.Complete)
+                        {
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                                <polyline points="20 6 9 17 4 12"/>
+                            </svg>
+                        }
+                        else if (phase.Status == PhaseStatus.InProgress)
+                        {
+                            <div class="phase-spinner"></div>
+                        }
+                        else
+                        {
+                            <div class="phase-dot"></div>
+                        }
+                    </div>
+                    <div class="phase-content">
+                        <span class="phase-name">@phase.Name</span>
+                        @if (phase.Status == PhaseStatus.InProgress && phase.Progress > 0)
+                        {
+                            <span class="phase-percentage">@phase.Progress%</span>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+
+        <div class="overall-progress">
+            <div class="progress-bar-container">
+                <div class="progress-bar-fill" style="width: @overallProgress%"></div>
+            </div>
+            <span class="progress-text">@overallProgress% Complete</span>
+        </div>
+
+        @if (!string.IsNullOrEmpty(statusMessage))
+        {
+            <div class="status-message">@statusMessage</div>
+        }
+    }
+</div>
+
+<style>
+    .task-progress-card {
+        margin-bottom: 1.5rem;
+    }
+    
+    .progress-phases {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .phase-item {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.5rem;
+        border-radius: 0.5rem;
+        transition: background-color 0.2s;
+    }
+    
+    .phase-item.phase-complete {
+        background-color: rgba(34, 197, 94, 0.1);
+    }
+    
+    .phase-item.phase-active {
+        background-color: rgba(59, 130, 246, 0.1);
+    }
+    
+    .phase-indicator {
+        width: 1.5rem;
+        height: 1.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+    
+    .phase-complete .phase-indicator {
+        color: var(--qg-success, #22c55e);
+    }
+    
+    .phase-active .phase-indicator {
+        color: var(--qg-primary, #3b82f6);
+    }
+    
+    .phase-dot {
+        width: 0.5rem;
+        height: 0.5rem;
+        background-color: var(--qg-text-muted, #9ca3af);
+        border-radius: 50%;
+    }
+    
+    .phase-spinner {
+        width: 1rem;
+        height: 1rem;
+        border: 2px solid currentColor;
+        border-right-color: transparent;
+        border-radius: 50%;
+        animation: spin 0.75s linear infinite;
+    }
+    
+    @@keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+    
+    .phase-content {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex: 1;
+    }
+    
+    .phase-name {
+        font-weight: 500;
+    }
+    
+    .phase-percentage {
+        font-size: 0.875rem;
+        color: var(--qg-primary, #3b82f6);
+    }
+    
+    .overall-progress {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+    
+    .progress-bar-container {
+        flex: 1;
+        height: 0.5rem;
+        background-color: var(--qg-bg-secondary, #e5e7eb);
+        border-radius: 0.25rem;
+        overflow: hidden;
+    }
+    
+    .progress-bar-fill {
+        height: 100%;
+        background-color: var(--qg-primary, #3b82f6);
+        border-radius: 0.25rem;
+        transition: width 0.3s ease;
+    }
+    
+    .progress-text {
+        font-size: 0.875rem;
+        color: var(--qg-text-secondary, #6b7280);
+        white-space: nowrap;
+    }
+    
+    .status-message {
+        margin-top: 1rem;
+        padding: 0.75rem;
+        background-color: var(--qg-bg-secondary, #f3f4f6);
+        border-radius: 0.5rem;
+        font-size: 0.875rem;
+        color: var(--qg-text-secondary, #6b7280);
+    }
+    
+    .progress-error {
+        display: flex;
+        gap: 1rem;
+        padding: 1rem;
+        background-color: rgba(239, 68, 68, 0.1);
+        border: 1px solid var(--qg-error, #ef4444);
+        border-radius: 0.5rem;
+    }
+    
+    .error-icon {
+        color: var(--qg-error, #ef4444);
+        flex-shrink: 0;
+    }
+    
+    .error-content h4 {
+        margin: 0 0 0.5rem 0;
+        color: var(--qg-error, #ef4444);
+    }
+    
+    .error-content p {
+        margin: 0 0 0.5rem 0;
+        color: var(--qg-text-primary, #1f2937);
+    }
+    
+    .error-code {
+        display: inline-block;
+        padding: 0.25rem 0.5rem;
+        background-color: rgba(239, 68, 68, 0.2);
+        border-radius: 0.25rem;
+        font-size: 0.75rem;
+        color: var(--qg-error, #ef4444);
+    }
+</style>
+
+@code {
+    [Parameter] public string? TaskId { get; set; }
+    [Parameter] public string? ThreadId { get; set; }
+    [Parameter] public EventCallback<string> OnComplete { get; set; }
+    [Parameter] public EventCallback<string> OnError { get; set; }
+
+    private List<PhaseInfo> phases = new()
+    {
+        new("Fetch", "Ingest.Fetch"),
+        new("Extract", "Ingest.Extract"),
+        new("Validate", "Ingest.Validate"),
+        new("Review Ready", "Ingest.ReviewReady")
+    };
+
+    private int overallProgress = 0;
+    private string? statusMessage;
+    private bool isFailed;
+    private string? errorMessage;
+    private string? errorCode;
+    private bool isConnected;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!string.IsNullOrEmpty(ThreadId))
+        {
+            SignalRClient.OnEvent += HandleEvent;
+            await SignalRClient.JoinThreadAsync(ThreadId);
+            isConnected = true;
+        }
+    }
+
+    private void HandleEvent(AgentEvent agentEvent)
+    {
+        // Check if this event is for our task via metadata
+        if (agentEvent.Metadata.TryGetValue("taskId", out var eventTaskId) && eventTaskId != TaskId)
+            return;
+
+        Logger.LogDebug("Received event for task {TaskId}: {EventType}", TaskId, agentEvent.EventType);
+
+        InvokeAsync(() =>
+        {
+            switch (agentEvent.EventType)
+            {
+                case "progress":
+                    HandleProgressEvent(agentEvent);
+                    break;
+                case "phase.started":
+                    HandlePhaseStarted(agentEvent);
+                    break;
+                case "phase.completed":
+                    HandlePhaseCompleted(agentEvent);
+                    break;
+                case "ingest.review_ready":
+                    HandleReviewReady(agentEvent);
+                    break;
+                case "ingest.failed":
+                case "task.failed":
+                    HandleFailed(agentEvent);
+                    break;
+            }
+
+            StateHasChanged();
+        });
+    }
+
+    private void HandleProgressEvent(AgentEvent e)
+    {
+        if (e.Metadata.TryGetValue("progress", out var progressStr) && int.TryParse(progressStr, out var progress))
+        {
+            overallProgress = progress;
+        }
+
+        if (e.Metadata.TryGetValue("phase", out var phaseName))
+        {
+            SetPhaseActive(phaseName);
+            
+            if (e.Metadata.TryGetValue("phaseProgress", out var phaseProgressStr) && int.TryParse(phaseProgressStr, out var phaseProgress))
+            {
+                UpdatePhaseProgress(phaseName, phaseProgress);
+            }
+        }
+
+        if (e.Metadata.TryGetValue("message", out var message))
+        {
+            statusMessage = message;
+        }
+    }
+
+    private void HandlePhaseStarted(AgentEvent e)
+    {
+        if (e.Metadata.TryGetValue("phase", out var phaseName))
+        {
+            SetPhaseActive(phaseName);
+            statusMessage = $"Starting {GetPhaseFriendlyName(phaseName)}...";
+        }
+    }
+
+    private void HandlePhaseCompleted(AgentEvent e)
+    {
+        if (e.Metadata.TryGetValue("phase", out var phaseName))
+        {
+            SetPhaseComplete(phaseName);
+        }
+    }
+
+    private async void HandleReviewReady(AgentEvent e)
+    {
+        foreach (var phase in phases)
+        {
+            phase.Status = PhaseStatus.Complete;
+        }
+        overallProgress = 100;
+        statusMessage = "Recipe ready for review!";
+
+        await OnComplete.InvokeAsync(TaskId);
+    }
+
+    private async void HandleFailed(AgentEvent e)
+    {
+        isFailed = true;
+        
+        if (e.Metadata.TryGetValue("error", out var error))
+        {
+            errorMessage = error;
+        }
+        else
+        {
+            errorMessage = "An unexpected error occurred during import.";
+        }
+
+        if (e.Metadata.TryGetValue("errorCode", out var code))
+        {
+            errorCode = code;
+        }
+
+        await OnError.InvokeAsync(errorMessage);
+    }
+
+    private void SetPhaseActive(string phaseName)
+    {
+        foreach (var phase in phases)
+        {
+            if (phase.PhaseKey == phaseName)
+            {
+                phase.Status = PhaseStatus.InProgress;
+            }
+            else if (phase.Status == PhaseStatus.InProgress)
+            {
+                phase.Status = PhaseStatus.Complete;
+            }
+        }
+    }
+
+    private void SetPhaseComplete(string phaseName)
+    {
+        var phase = phases.FirstOrDefault(p => p.PhaseKey == phaseName);
+        if (phase != null)
+        {
+            phase.Status = PhaseStatus.Complete;
+            phase.Progress = 100;
+        }
+    }
+
+    private void UpdatePhaseProgress(string phaseName, int progress)
+    {
+        var phase = phases.FirstOrDefault(p => p.PhaseKey == phaseName);
+        if (phase != null)
+        {
+            phase.Progress = progress;
+        }
+    }
+
+    private string GetPhaseFriendlyName(string phaseName)
+    {
+        return phases.FirstOrDefault(p => p.PhaseKey == phaseName)?.Name ?? phaseName;
+    }
+
+    private string GetPhaseClass(PhaseInfo phase)
+    {
+        return phase.Status switch
+        {
+            PhaseStatus.Complete => "phase-complete",
+            PhaseStatus.InProgress => "phase-active",
+            _ => ""
+        };
+    }
+
+    public void Dispose()
+    {
+        SignalRClient.OnEvent -= HandleEvent;
+        
+        if (isConnected && !string.IsNullOrEmpty(ThreadId))
+        {
+            _ = SignalRClient.LeaveThreadAsync(ThreadId);
+        }
+    }
+
+    private class PhaseInfo
+    {
+        public string Name { get; }
+        public string PhaseKey { get; }
+        public PhaseStatus Status { get; set; } = PhaseStatus.Pending;
+        public int Progress { get; set; }
+
+        public PhaseInfo(string name, string phaseKey)
+        {
+            Name = name;
+            PhaseKey = phaseKey;
+        }
+    }
+
+    private enum PhaseStatus
+    {
+        Pending,
+        InProgress,
+        Complete
+    }
+}

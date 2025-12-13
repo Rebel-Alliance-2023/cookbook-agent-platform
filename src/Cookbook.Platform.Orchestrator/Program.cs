@@ -1,5 +1,7 @@
 using Cookbook.Platform.Infrastructure;
 using Cookbook.Platform.Orchestrator.Services;
+using Cookbook.Platform.Orchestrator.Services.Ingest;
+using Cookbook.Platform.Shared.Configuration;
 using Cookbook.Platform.Storage;
 using Microsoft.Extensions.Http.Resilience;
 
@@ -25,9 +27,32 @@ builder.Services.AddLlmRouter(builder.Configuration);
 builder.Services.AddCosmosRepositories(builder.Configuration);
 builder.Services.AddBlobStorage(builder.Configuration);
 
+// Add Ingest options
+builder.Services.Configure<IngestOptions>(
+    builder.Configuration.GetSection(IngestOptions.SectionName));
+
 // Add orchestrator services
 builder.Services.AddSingleton<OrchestratorService>();
 builder.Services.AddSingleton<AgentPipeline>();
+builder.Services.AddSingleton<IngestPhaseRunner>();
+
+// Add Ingest services
+builder.Services.AddSingleton<ISsrfProtectionService, SsrfProtectionService>();
+builder.Services.AddSingleton<ICircuitBreakerService, CircuitBreakerService>();
+builder.Services.AddSingleton<ISanitizationService, HtmlSanitizationService>();
+builder.Services.AddHttpClient<IFetchService, HttpFetchService>();
+
+// Add Recipe Extraction services
+builder.Services.AddSingleton<JsonLdRecipeExtractor>();
+builder.Services.AddSingleton<LlmRecipeExtractor>();
+builder.Services.AddSingleton<RecipeExtractionOrchestrator>();
+
+// Add Recipe Validation services
+builder.Services.AddSingleton<IRecipeValidator, RecipeValidator>();
+
+// Add Artifact Storage services
+builder.Services.AddSingleton<IArtifactStorageService, BlobArtifactStorageService>();
+
 builder.Services.AddHostedService<TaskProcessorService>();
 
 // Add HTTP clients for A2A agents with service discovery

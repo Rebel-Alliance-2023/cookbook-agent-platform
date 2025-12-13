@@ -1,0 +1,706 @@
+@page "/ingest/review/{TaskId}"
+@using global::Cookbook.Platform.Shared.Models
+@using global::Cookbook.Platform.Shared.Models.Ingest
+@inject ApiClientService ApiClient
+@inject NavigationManager Navigation
+@inject ILogger<ReviewReady> Logger
+@rendermode InteractiveServer
+
+<PageTitle>Review Imported Recipe</PageTitle>
+
+<header class="qg-page-header">
+    <h1 class="qg-page-title">Review Recipe</h1>
+    <p class="qg-page-subtitle">
+        Review the extracted recipe before adding it to your cookbook
+    </p>
+</header>
+
+@if (isLoading)
+{
+    <div class="loading-container">
+        <div class="loading-spinner large"></div>
+        <p>Loading recipe draft...</p>
+    </div>
+}
+else if (errorMessage != null)
+{
+    <div class="qg-card error-card">
+        <div class="error-content">
+            <h3>Error Loading Recipe</h3>
+            <p>@errorMessage</p>
+            <button class="qg-btn qg-btn-primary" @onclick="NavigateToIngest">
+                Try Another URL
+            </button>
+        </div>
+    </div>
+}
+else if (draft != null)
+{
+    <div class="review-layout">
+        <!-- Recipe Details -->
+        <div class="qg-card recipe-card">
+            <div class="recipe-header">
+                @if (!string.IsNullOrEmpty(draft.Recipe.ImageUrl))
+                {
+                    <img src="@draft.Recipe.ImageUrl" alt="@draft.Recipe.Name" class="recipe-image" />
+                }
+                <div class="recipe-title-section">
+                    <h2 class="recipe-title">@draft.Recipe.Name</h2>
+                    @if (!string.IsNullOrEmpty(draft.Recipe.Description))
+                    {
+                        <p class="recipe-description">@draft.Recipe.Description</p>
+                    }
+                </div>
+            </div>
+
+            <div class="recipe-meta">
+                <div class="meta-item">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"/>
+                        <polyline points="12 6 12 12 16 14"/>
+                    </svg>
+                    <span>Prep: @FormatTime(draft.Recipe.PrepTimeMinutes)</span>
+                </div>
+                <div class="meta-item">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
+                    </svg>
+                    <span>Cook: @FormatTime(draft.Recipe.CookTimeMinutes)</span>
+                </div>
+                <div class="meta-item">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                        <circle cx="9" cy="7" r="4"/>
+                        <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>
+                    </svg>
+                    <span>Servings: @draft.Recipe.Servings</span>
+                </div>
+                @if (!string.IsNullOrEmpty(draft.Recipe.Cuisine))
+                {
+                    <div class="meta-item">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"/>
+                            <line x1="2" y1="12" x2="22" y2="12"/>
+                            <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+                        </svg>
+                        <span>@draft.Recipe.Cuisine</span>
+                    </div>
+                }
+            </div>
+
+            @if (draft.Recipe.Tags.Any())
+            {
+                <div class="recipe-tags">
+                    @foreach (var tag in draft.Recipe.Tags)
+                    {
+                        <span class="tag">@tag</span>
+                    }
+                </div>
+            }
+
+            <!-- Ingredients -->
+            <div class="recipe-section">
+                <h3 class="section-title">Ingredients</h3>
+                <ul class="ingredients-list">
+                    @foreach (var ingredient in draft.Recipe.Ingredients)
+                    {
+                        <li class="ingredient-item">
+                            <span class="ingredient-quantity">
+                                @if (ingredient.Quantity > 0)
+                                {
+                                    @FormatQuantity(ingredient.Quantity)
+                                    @ingredient.Unit
+                                }
+                            </span>
+                            <span class="ingredient-name">@ingredient.Name</span>
+                            @if (!string.IsNullOrEmpty(ingredient.Notes))
+                            {
+                                <span class="ingredient-notes">(@ingredient.Notes)</span>
+                            }
+                        </li>
+                    }
+                </ul>
+            </div>
+
+            <!-- Instructions -->
+            <div class="recipe-section">
+                <h3 class="section-title">Instructions</h3>
+                <ol class="instructions-list">
+                    @foreach (var instruction in draft.Recipe.Instructions)
+                    {
+                        <li class="instruction-item">@instruction</li>
+                    }
+                </ol>
+            </div>
+
+            <!-- Source Information -->
+            @if (draft.Source != null)
+            {
+                <div class="recipe-section source-section">
+                    <h3 class="section-title">Source</h3>
+                    <div class="source-info">
+                        <a href="@draft.Source.Url" target="_blank" rel="noopener noreferrer" class="source-link">
+                            @(draft.Source.SiteName ?? new Uri(draft.Source.Url).Host)
+                        </a>
+                        @if (!string.IsNullOrEmpty(draft.Source.Author))
+                        {
+                            <span class="source-author">by @draft.Source.Author</span>
+                        }
+                        <span class="extraction-method">
+                            Extracted via @draft.Source.ExtractionMethod
+                        </span>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <!-- Validation & Actions -->
+        <div class="sidebar">
+            <!-- Validation Report -->
+            <div class="qg-card validation-card">
+                <div class="qg-section-header">
+                    <h3 class="qg-section-title">Validation</h3>
+                </div>
+
+                @if (draft.ValidationReport.IsValid)
+                {
+                    <div class="validation-success">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                            <polyline points="22 4 12 14.01 9 11.01"/>
+                        </svg>
+                        <span>Recipe is valid!</span>
+                    </div>
+                }
+                else
+                {
+                    <div class="validation-errors">
+                        <h4>Errors</h4>
+                        <ul>
+                            @foreach (var error in draft.ValidationReport.Errors)
+                            {
+                                <li class="error-item">@error</li>
+                            }
+                        </ul>
+                    </div>
+                }
+
+                @if (draft.ValidationReport.Warnings.Any())
+                {
+                    <div class="validation-warnings">
+                        <h4>Warnings</h4>
+                        <ul>
+                            @foreach (var warning in draft.ValidationReport.Warnings)
+                            {
+                                <li class="warning-item">@warning</li>
+                            }
+                        </ul>
+                    </div>
+                }
+            </div>
+
+            <!-- Actions -->
+            <div class="qg-card actions-card">
+                <div class="qg-section-header">
+                    <h3 class="qg-section-title">Actions</h3>
+                </div>
+
+                <div class="action-buttons">
+                    <button class="qg-btn qg-btn-primary qg-btn-lg" 
+                            @onclick="CommitRecipe"
+                            disabled="@(isCommitting || !draft.ValidationReport.IsValid)">
+                        @if (isCommitting)
+                        {
+                            <span class="loading-spinner"></span>
+                            <span>Saving...</span>
+                        }
+                        else
+                        {
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="20 6 9 17 4 12"/>
+                            </svg>
+                            <span>Add to Cookbook</span>
+                        }
+                    </button>
+
+                    <button class="qg-btn qg-btn-secondary" 
+                            @onclick="ShowRejectDialog"
+                            disabled="@isCommitting">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="18" y1="6" x2="6" y2="18"/>
+                            <line x1="6" y1="6" x2="18" y2="18"/>
+                        </svg>
+                        <span>Reject</span>
+                    </button>
+
+                    <button class="qg-btn qg-btn-outline" @onclick="NavigateToIngest">
+                        <span>Import Another</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@if (showRejectDialog)
+{
+    <div class="dialog-overlay" @onclick="HideRejectDialog">
+        <div class="dialog" @onclick:stopPropagation>
+            <h3>Reject Recipe</h3>
+            <p>Are you sure you want to reject this recipe? It will not be added to your cookbook.</p>
+            <div class="form-group">
+                <label class="qg-label">Reason (optional)</label>
+                <textarea class="qg-input" @bind="rejectReason" rows="3" placeholder="Why are you rejecting this recipe?"></textarea>
+            </div>
+            <div class="dialog-actions">
+                <button class="qg-btn qg-btn-secondary" @onclick="HideRejectDialog">Cancel</button>
+                <button class="qg-btn qg-btn-danger" @onclick="RejectRecipe">Reject</button>
+            </div>
+        </div>
+    </div>
+}
+
+<style>
+    .loading-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 4rem;
+        gap: 1rem;
+    }
+    
+    .loading-spinner.large {
+        width: 3rem;
+        height: 3rem;
+        border-width: 3px;
+    }
+    
+    .loading-spinner {
+        display: inline-block;
+        width: 16px;
+        height: 16px;
+        border: 2px solid currentColor;
+        border-right-color: transparent;
+        border-radius: 50%;
+        animation: spin 0.75s linear infinite;
+        margin-right: 0.5rem;
+    }
+    
+    @@keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+    
+    .error-card {
+        max-width: 500px;
+        margin: 2rem auto;
+        text-align: center;
+    }
+    
+    .review-layout {
+        display: grid;
+        grid-template-columns: 1fr 350px;
+        gap: 1.5rem;
+        align-items: start;
+    }
+    
+    @@media (max-width: 1024px) {
+        .review-layout {
+            grid-template-columns: 1fr;
+        }
+    }
+    
+    .recipe-card {
+        padding: 1.5rem;
+    }
+    
+    .recipe-header {
+        display: flex;
+        gap: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .recipe-image {
+        width: 200px;
+        height: 150px;
+        object-fit: cover;
+        border-radius: 0.5rem;
+    }
+    
+    .recipe-title {
+        margin: 0 0 0.5rem 0;
+        font-size: 1.5rem;
+    }
+    
+    .recipe-description {
+        color: var(--qg-text-secondary, #6b7280);
+        margin: 0;
+    }
+    
+    .recipe-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1.5rem;
+        margin-bottom: 1rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid var(--qg-border, #e5e7eb);
+    }
+    
+    .meta-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: var(--qg-text-secondary, #6b7280);
+        font-size: 0.875rem;
+    }
+    
+    .recipe-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .tag {
+        background-color: var(--qg-bg-secondary, #f3f4f6);
+        color: var(--qg-text-secondary, #6b7280);
+        padding: 0.25rem 0.75rem;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+    }
+    
+    .recipe-section {
+        margin-bottom: 1.5rem;
+    }
+    
+    .section-title {
+        font-size: 1.125rem;
+        margin: 0 0 1rem 0;
+        padding-bottom: 0.5rem;
+        border-bottom: 1px solid var(--qg-border, #e5e7eb);
+    }
+    
+    .ingredients-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+    
+    .ingredient-item {
+        display: flex;
+        gap: 0.5rem;
+        padding: 0.5rem 0;
+        border-bottom: 1px solid var(--qg-border-light, #f3f4f6);
+    }
+    
+    .ingredient-quantity {
+        font-weight: 500;
+        min-width: 80px;
+    }
+    
+    .ingredient-notes {
+        color: var(--qg-text-muted, #9ca3af);
+        font-style: italic;
+    }
+    
+    .instructions-list {
+        padding-left: 1.5rem;
+        margin: 0;
+    }
+    
+    .instruction-item {
+        padding: 0.75rem 0;
+        line-height: 1.6;
+    }
+    
+    .source-section {
+        background-color: var(--qg-bg-secondary, #f9fafb);
+        padding: 1rem;
+        border-radius: 0.5rem;
+        margin-top: 1.5rem;
+    }
+    
+    .source-info {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .source-link {
+        color: var(--qg-primary, #3b82f6);
+    }
+    
+    .source-author {
+        color: var(--qg-text-secondary, #6b7280);
+    }
+    
+    .extraction-method {
+        background-color: var(--qg-bg-tertiary, #e5e7eb);
+        padding: 0.125rem 0.5rem;
+        border-radius: 0.25rem;
+        font-size: 0.75rem;
+        color: var(--qg-text-muted, #9ca3af);
+    }
+    
+    .sidebar {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        position: sticky;
+        top: 1rem;
+    }
+    
+    .validation-success {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: var(--qg-success, #22c55e);
+        font-weight: 500;
+    }
+    
+    .validation-errors h4,
+    .validation-warnings h4 {
+        margin: 0 0 0.5rem 0;
+        font-size: 0.875rem;
+    }
+    
+    .validation-errors {
+        margin-bottom: 1rem;
+    }
+    
+    .validation-errors h4 {
+        color: var(--qg-error, #ef4444);
+    }
+    
+    .validation-warnings h4 {
+        color: var(--qg-warning, #f59e0b);
+    }
+    
+    .validation-errors ul,
+    .validation-warnings ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        font-size: 0.875rem;
+    }
+    
+    .error-item {
+        color: var(--qg-error, #ef4444);
+        padding: 0.25rem 0;
+    }
+    
+    .warning-item {
+        color: var(--qg-warning, #f59e0b);
+        padding: 0.25rem 0;
+    }
+    
+    .action-buttons {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+    
+    .qg-btn-lg {
+        padding: 0.875rem 1.5rem;
+        font-size: 1rem;
+    }
+    
+    .qg-btn-danger {
+        background-color: var(--qg-error, #ef4444);
+        color: white;
+    }
+    
+    .qg-btn-danger:hover {
+        background-color: #dc2626;
+    }
+    
+    .dialog-overlay {
+        position: fixed;
+        inset: 0;
+        background-color: rgba(0, 0, 0, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+    }
+    
+    .dialog {
+        background-color: white;
+        padding: 1.5rem;
+        border-radius: 0.5rem;
+        max-width: 400px;
+        width: 90%;
+    }
+    
+    .dialog h3 {
+        margin: 0 0 1rem 0;
+    }
+    
+    .dialog p {
+        color: var(--qg-text-secondary, #6b7280);
+        margin-bottom: 1rem;
+    }
+    
+    .form-group {
+        margin-bottom: 1rem;
+    }
+    
+    .dialog-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 0.75rem;
+    }
+</style>
+
+@code {
+    [Parameter] public string? TaskId { get; set; }
+
+    private RecipeDraft? draft;
+    private bool isLoading = true;
+    private string? errorMessage;
+    private bool isCommitting;
+    private bool showRejectDialog;
+    private string? rejectReason;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadDraft();
+    }
+
+    private async Task LoadDraft()
+    {
+        if (string.IsNullOrEmpty(TaskId))
+        {
+            errorMessage = "No task ID provided.";
+            isLoading = false;
+            return;
+        }
+
+        try
+        {
+            draft = await ApiClient.GetRecipeDraftAsync(TaskId);
+            
+            if (draft == null)
+            {
+                errorMessage = "Recipe draft not found. The import may still be in progress.";
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to load recipe draft for task {TaskId}", TaskId);
+            errorMessage = $"Failed to load recipe: {ex.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task CommitRecipe()
+    {
+        if (draft == null || !draft.ValidationReport.IsValid)
+            return;
+
+        isCommitting = true;
+
+        try
+        {
+            var success = await ApiClient.CommitRecipeDraftAsync(TaskId!);
+            
+            if (success)
+            {
+                Logger.LogInformation("Recipe committed for task {TaskId}", TaskId);
+                Navigation.NavigateTo($"/recipes/{draft.Recipe.Id}");
+            }
+            else
+            {
+                errorMessage = "Failed to save recipe. Please try again.";
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to commit recipe for task {TaskId}", TaskId);
+            errorMessage = $"Failed to save recipe: {ex.Message}";
+        }
+        finally
+        {
+            isCommitting = false;
+        }
+    }
+
+    private async Task RejectRecipe()
+    {
+        try
+        {
+            var success = await ApiClient.RejectRecipeDraftAsync(TaskId!, rejectReason);
+            
+            if (success)
+            {
+                Logger.LogInformation("Recipe rejected for task {TaskId}", TaskId);
+                Navigation.NavigateTo("/ingest");
+            }
+            else
+            {
+                errorMessage = "Failed to reject recipe. Please try again.";
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to reject recipe for task {TaskId}", TaskId);
+            errorMessage = $"Failed to reject recipe: {ex.Message}";
+        }
+        finally
+        {
+            showRejectDialog = false;
+        }
+    }
+
+    private void NavigateToIngest()
+    {
+        Navigation.NavigateTo("/ingest");
+    }
+
+    private void ShowRejectDialog()
+    {
+        showRejectDialog = true;
+    }
+
+    private void HideRejectDialog()
+    {
+        showRejectDialog = false;
+    }
+
+    private string FormatTime(int minutes)
+    {
+        if (minutes == 0)
+            return "N/A";
+        if (minutes < 60)
+            return $"{minutes} min";
+        
+        var hours = minutes / 60;
+        var mins = minutes % 60;
+        return mins > 0 ? $"{hours}h {mins}m" : $"{hours}h";
+    }
+
+    private string FormatQuantity(double quantity)
+    {
+        if (quantity == Math.Floor(quantity))
+            return ((int)quantity).ToString();
+        
+        var fraction = quantity - Math.Floor(quantity);
+        var whole = (int)Math.Floor(quantity);
+        
+        var fractionStr = fraction switch
+        {
+            0.25 => "¼",
+            0.33 or 0.333 => "?",
+            0.5 => "½",
+            0.66 or 0.667 => "?",
+            0.75 => "¾",
+            _ => fraction.ToString("0.##")
+        };
+
+        return whole > 0 ? $"{whole} {fractionStr}" : fractionStr;
+    }
+}

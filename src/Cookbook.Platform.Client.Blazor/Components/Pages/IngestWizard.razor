@@ -1,0 +1,302 @@
+@page "/ingest"
+@using global::Cookbook.Platform.Shared.Messaging
+@using global::Cookbook.Platform.Shared.Models.Ingest
+@inject SignalRClientService SignalRClient
+@inject ApiClientService ApiClient
+@inject NavigationManager Navigation
+@inject ILogger<IngestWizard> Logger
+@rendermode InteractiveServer
+
+<PageTitle>Import Recipe from URL</PageTitle>
+
+<header class="qg-page-header">
+    <h1 class="qg-page-title">Import Recipe</h1>
+    <p class="qg-page-subtitle">
+        Import a recipe from any cooking website
+    </p>
+</header>
+
+<div class="page-grid">
+    <div>
+        <!-- URL Input Card -->
+        <div class="qg-card qg-mb-24">
+            <div class="qg-section-header">
+                <h3 class="qg-section-title">Enter Recipe URL</h3>
+                <p class="qg-section-description">Paste the URL of a recipe you want to import</p>
+            </div>
+
+            <EditForm Model="@formModel" OnValidSubmit="StartImport">
+                <DataAnnotationsValidator />
+                
+                <div class="qg-form-group">
+                    <label class="qg-label" for="recipeUrl">Recipe URL</label>
+                    <div class="url-input-wrapper">
+                        <input type="url" 
+                               id="recipeUrl"
+                               class="qg-input @(urlError != null ? "qg-input-error" : "")" 
+                               @bind="formModel.Url" 
+                               @bind:event="oninput"
+                               @onfocusout="ValidateUrl"
+                               placeholder="https://example.com/recipe/chocolate-chip-cookies"
+                               disabled="@isSubmitting" />
+                    </div>
+                    @if (urlError != null)
+                    {
+                        <div class="qg-error-text">@urlError</div>
+                    }
+                </div>
+
+                <div class="qg-form-actions">
+                    <button type="submit" 
+                            class="qg-btn qg-btn-primary" 
+                            disabled="@(isSubmitting || !IsUrlValid)">
+                        @if (isSubmitting)
+                        {
+                            <span class="loading-spinner"></span>
+                            <span>Starting Import...</span>
+                        }
+                        else
+                        {
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                                <polyline points="7 10 12 15 17 10"/>
+                                <line x1="12" y1="15" x2="12" y2="3"/>
+                            </svg>
+                            <span>Import Recipe</span>
+                        }
+                    </button>
+                </div>
+            </EditForm>
+
+            @if (errorMessage != null)
+            {
+                <div class="error-alert qg-mt-16">
+                    <strong>Error:</strong> @errorMessage
+                </div>
+            }
+        </div>
+
+        <!-- Progress Section (shown when import is in progress) -->
+        @if (currentTaskId != null)
+        {
+            <TaskProgress TaskId="@currentTaskId" 
+                          ThreadId="@currentThreadId"
+                          OnComplete="HandleImportComplete"
+                          OnError="HandleImportError" />
+        }
+
+        <!-- Recent Imports (placeholder for future) -->
+        <div class="qg-card">
+            <div class="qg-section-header">
+                <h3 class="qg-section-title">How It Works</h3>
+            </div>
+            <div class="steps-list">
+                <div class="step-item">
+                    <div class="step-number">1</div>
+                    <div class="step-content">
+                        <h4>Fetch</h4>
+                        <p>We retrieve the recipe page from the URL</p>
+                    </div>
+                </div>
+                <div class="step-item">
+                    <div class="step-number">2</div>
+                    <div class="step-content">
+                        <h4>Extract</h4>
+                        <p>AI extracts the recipe details from the page</p>
+                    </div>
+                </div>
+                <div class="step-item">
+                    <div class="step-number">3</div>
+                    <div class="step-content">
+                        <h4>Validate</h4>
+                        <p>We check the extracted data for accuracy</p>
+                    </div>
+                </div>
+                <div class="step-item">
+                    <div class="step-number">4</div>
+                    <div class="step-content">
+                        <h4>Review</h4>
+                        <p>You review and approve the imported recipe</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .url-input-wrapper {
+        position: relative;
+    }
+    
+    .qg-input-error {
+        border-color: var(--qg-error, #ef4444) !important;
+    }
+    
+    .qg-error-text {
+        color: var(--qg-error, #ef4444);
+        font-size: 0.875rem;
+        margin-top: 0.25rem;
+    }
+    
+    .qg-form-group {
+        margin-bottom: 1rem;
+    }
+    
+    .qg-form-actions {
+        margin-top: 1.5rem;
+    }
+    
+    .qg-mt-16 {
+        margin-top: 1rem;
+    }
+    
+    .error-alert {
+        background-color: rgba(239, 68, 68, 0.1);
+        border: 1px solid var(--qg-error, #ef4444);
+        border-radius: 0.5rem;
+        padding: 1rem;
+        color: var(--qg-error, #ef4444);
+    }
+    
+    .loading-spinner {
+        display: inline-block;
+        width: 16px;
+        height: 16px;
+        border: 2px solid currentColor;
+        border-right-color: transparent;
+        border-radius: 50%;
+        animation: spin 0.75s linear infinite;
+        margin-right: 0.5rem;
+    }
+    
+    @@keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+    
+    .steps-list {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .step-item {
+        display: flex;
+        gap: 1rem;
+        align-items: flex-start;
+    }
+    
+    .step-number {
+        width: 2rem;
+        height: 2rem;
+        background: var(--qg-primary, #3b82f6);
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        flex-shrink: 0;
+    }
+    
+    .step-content h4 {
+        margin: 0 0 0.25rem 0;
+        font-size: 1rem;
+        font-weight: 600;
+    }
+    
+    .step-content p {
+        margin: 0;
+        font-size: 0.875rem;
+        color: var(--qg-text-secondary, #6b7280);
+    }
+</style>
+
+@code {
+    private IngestFormModel formModel = new();
+    private string? urlError;
+    private string? errorMessage;
+    private bool isSubmitting;
+    private string? currentTaskId;
+    private string? currentThreadId;
+
+    private bool IsUrlValid => !string.IsNullOrWhiteSpace(formModel.Url) && urlError == null && ValidateUrlFormat(formModel.Url);
+
+    private void ValidateUrl()
+    {
+        urlError = null;
+        
+        if (string.IsNullOrWhiteSpace(formModel.Url))
+        {
+            return;
+        }
+
+        if (!ValidateUrlFormat(formModel.Url))
+        {
+            urlError = "Please enter a valid URL (must start with http:// or https://)";
+        }
+    }
+
+    private bool ValidateUrlFormat(string url)
+    {
+        if (string.IsNullOrWhiteSpace(url))
+            return false;
+
+        if (!Uri.TryCreate(url, UriKind.Absolute, out var uri))
+            return false;
+
+        return uri.Scheme == "http" || uri.Scheme == "https";
+    }
+
+    private async Task StartImport()
+    {
+        ValidateUrl();
+        
+        if (!IsUrlValid)
+        {
+            urlError ??= "Please enter a valid URL";
+            return;
+        }
+
+        isSubmitting = true;
+        errorMessage = null;
+
+        try
+        {
+            Logger.LogInformation("Starting recipe import from URL: {Url}", formModel.Url);
+
+            var response = await ApiClient.CreateIngestTaskAsync(formModel.Url!);
+            
+            currentTaskId = response.TaskId;
+            currentThreadId = response.ThreadId;
+
+            Logger.LogInformation("Created ingest task {TaskId} for thread {ThreadId}", 
+                currentTaskId, currentThreadId);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to create ingest task");
+            errorMessage = $"Failed to start import: {ex.Message}";
+            isSubmitting = false;
+        }
+    }
+
+    private void HandleImportComplete(string taskId)
+    {
+        Logger.LogInformation("Import complete for task {TaskId}", taskId);
+        Navigation.NavigateTo($"/ingest/review/{taskId}");
+    }
+
+    private void HandleImportError(string error)
+    {
+        errorMessage = error;
+        isSubmitting = false;
+        currentTaskId = null;
+        currentThreadId = null;
+    }
+
+    private class IngestFormModel
+    {
+        public string? Url { get; set; }
+    }
+}

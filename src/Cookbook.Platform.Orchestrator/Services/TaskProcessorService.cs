@@ -40,9 +40,10 @@ public class TaskProcessorService : BackgroundService
         var consumerGroup = "orchestrator";
         var consumerName = Environment.MachineName;
 
-        // Process tasks from Research and Analysis streams
+        // Process tasks from Ingest, Research and Analysis streams
         var streams = new[]
         {
+            $"{_options.RedisStreamPrefix}Ingest",
             $"{_options.RedisStreamPrefix}Research",
             $"{_options.RedisStreamPrefix}Analysis"
         };
@@ -88,13 +89,16 @@ public class TaskProcessorService : BackgroundService
                                 
                                 if (task != null)
                                 {
-                                    _logger.LogInformation("Processing task {TaskId} of type {AgentType}",
-                                        task.TaskId, task.AgentType);
+                                    _logger.LogInformation("Processing task {TaskId} of type {AgentType} from stream {Stream}",
+                                        task.TaskId, task.AgentType, stream);
 
                                     await _orchestrator.ProcessTaskAsync(task, stoppingToken);
 
                                     // Acknowledge the message
                                     await db.StreamAcknowledgeAsync(stream, consumerGroup, entry.Id);
+                                    
+                                    _logger.LogInformation("Task {TaskId} acknowledged on stream {Stream}", 
+                                        task.TaskId, stream);
                                 }
                             }
                         }

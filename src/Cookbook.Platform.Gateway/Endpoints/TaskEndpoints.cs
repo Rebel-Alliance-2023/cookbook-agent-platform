@@ -1,6 +1,7 @@
 using System.Text.Json;
 using Cookbook.Platform.Shared.Agents;
 using Cookbook.Platform.Shared.Messaging;
+using Cookbook.Platform.Shared.Models.Ingest;
 using Cookbook.Platform.Storage.Repositories;
 
 namespace Cookbook.Platform.Gateway.Endpoints;
@@ -18,6 +19,10 @@ public static class TaskEndpoints
         group.MapPost("/", CreateTask)
             .WithName("CreateTask")
             .WithSummary("Creates and enqueues a new agent task");
+
+        group.MapPost("/ingest", CreateIngestTask)
+            .WithName("CreateIngestTask")
+            .WithSummary("Creates and enqueues a new ingest agent task with full contract support");
 
         group.MapGet("/{taskId}", GetTask)
             .WithName("GetTask")
@@ -38,7 +43,161 @@ public static class TaskEndpoints
         return endpoints;
     }
 
-    public record CreateTaskRequest(string ThreadId, string AgentType, string Query);
+    public record CreateTaskRequest(string? ThreadId, string AgentType, string Query);
+
+    /// <summary>
+    /// Creates a new ingest task with the full ingest contract.
+    /// </summary>
+    private static async Task<IResult> CreateIngestTask(
+        CreateIngestTaskRequest request,
+        IMessagingBus messagingBus,
+        TaskRepository taskRepository,
+        CancellationToken cancellationToken)
+    {
+        // Validate agent type is Ingest
+        if (!string.Equals(request.AgentType, KnownAgentTypes.Ingest, StringComparison.OrdinalIgnoreCase))
+        {
+            return Results.BadRequest(new
+            {
+                code = "INVALID_AGENT_TYPE",
+                message = $"This endpoint only accepts AgentType='{KnownAgentTypes.Ingest}'. Received: '{request.AgentType}'",
+                agentType = request.AgentType
+            });
+        }
+
+        // Validate ingest payload
+        var validationResult = ValidateIngestPayload(request.Payload);
+        if (validationResult is not null)
+        {
+            return validationResult;
+        }
+
+        // Generate ThreadId if not provided
+        var threadId = string.IsNullOrWhiteSpace(request.ThreadId) 
+            ? Guid.NewGuid().ToString() 
+            : request.ThreadId;
+
+        // Serialize the ingest payload
+        var payload = JsonSerializer.Serialize(request.Payload, new JsonSerializerOptions
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            WriteIndented = false
+        });
+
+        var task = new AgentTask
+        {
+            TaskId = Guid.NewGuid().ToString(),
+            ThreadId = threadId,
+            AgentType = KnownAgentTypes.Ingest,
+            Payload = payload,
+            CreatedAt = DateTime.UtcNow,
+            Metadata = BuildIngestMetadata(request.Payload)
+        };
+
+        // Persist task to Cosmos
+        await taskRepository.CreateAsync(task, cancellationToken);
+
+        // Enqueue task via messaging bus
+        await messagingBus.SendTaskAsync(task, cancellationToken);
+
+        // Return the ingest-specific response
+        var response = new CreateIngestTaskResponse
+        {
+            TaskId = task.TaskId,
+            ThreadId = task.ThreadId,
+            AgentType = task.AgentType,
+            Status = "Pending"
+        };
+
+        return Results.Created($"/api/tasks/{task.TaskId}", response);
+    }
+
+    /// <summary>
+    /// Validates the ingest payload based on mode.
+    /// </summary>
+    private static IResult? ValidateIngestPayload(IngestPayload payload)
+    {
+        return payload.Mode switch
+        {
+            IngestMode.Url when string.IsNullOrWhiteSpace(payload.Url) =>
+                Results.BadRequest(new
+                {
+                    code = "MISSING_URL",
+                    message = "URL is required when mode is 'Url'",
+                    mode = payload.Mode.ToString()
+                }),
+                
+            IngestMode.Url when !IsValidUrl(payload.Url) =>
+                Results.BadRequest(new
+                {
+                    code = "INVALID_URL",
+                    message = "URL must be a valid HTTP or HTTPS URL",
+                    url = payload.Url
+                }),
+                
+            IngestMode.Query when string.IsNullOrWhiteSpace(payload.Query) =>
+                Results.BadRequest(new
+                {
+                    code = "MISSING_QUERY",
+                    message = "Query is required when mode is 'Query'",
+                    mode = payload.Mode.ToString()
+                }),
+                
+            IngestMode.Normalize when string.IsNullOrWhiteSpace(payload.RecipeId) =>
+                Results.BadRequest(new
+                {
+                    code = "MISSING_RECIPE_ID",
+                    message = "RecipeId is required when mode is 'Normalize'",
+                    mode = payload.Mode.ToString()
+                }),
+                
+            _ => null
+        };
+    }
+
+    /// <summary>
+    /// Validates that a URL is a proper HTTP/HTTPS URL.
+    /// </summary>
+    private static bool IsValidUrl(string? url)
+    {
+        if (string.IsNullOrWhiteSpace(url))
+            return false;
+            
+        return Uri.TryCreate(url, UriKind.Absolute, out var uri) 
+            && (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps);
+    }
+
+    /// <summary>
+    /// Builds metadata dictionary from ingest payload for audit purposes.
+    /// </summary>
+    private static Dictionary<string, string> BuildIngestMetadata(IngestPayload payload)
+    {
+        var metadata = new Dictionary<string, string>
+        {
+            ["ingestMode"] = payload.Mode.ToString()
+        };
+
+        if (!string.IsNullOrWhiteSpace(payload.Url))
+            metadata["sourceUrl"] = payload.Url;
+            
+        if (!string.IsNullOrWhiteSpace(payload.Query))
+            metadata["searchQuery"] = payload.Query;
+            
+        if (!string.IsNullOrWhiteSpace(payload.RecipeId))
+            metadata["recipeId"] = payload.RecipeId;
+
+        // Record prompt selections for audit
+        if (payload.PromptSelection?.ExtractPromptId is not null)
+            metadata["promptId:extract"] = payload.PromptSelection.ExtractPromptId;
+            
+        if (payload.PromptSelection?.NormalizePromptId is not null)
+            metadata["promptId:normalize"] = payload.PromptSelection.NormalizePromptId;
+            
+        if (payload.PromptSelection?.DiscoverPromptId is not null)
+            metadata["promptId:discover"] = payload.PromptSelection.DiscoverPromptId;
+
+        return metadata;
+    }
 
     private static async Task<IResult> CreateTask(
         CreateTaskRequest request,
@@ -51,14 +210,20 @@ public static class TaskEndpoints
         {
             return Results.BadRequest(new
             {
-                error = "INVALID_AGENT_TYPE",
+                code = "INVALID_AGENT_TYPE",
                 message = $"Unknown agent type '{request.AgentType}'. Valid types are: {string.Join(", ", KnownAgentTypes.All)}",
+                agentType = request.AgentType,
                 validTypes = KnownAgentTypes.All
             });
         }
 
         // Normalize agent type to canonical casing
         var agentType = KnownAgentTypes.GetCanonical(request.AgentType) ?? request.AgentType;
+
+        // Generate ThreadId if not provided
+        var threadId = string.IsNullOrWhiteSpace(request.ThreadId) 
+            ? Guid.NewGuid().ToString() 
+            : request.ThreadId;
 
         // Determine payload based on whether Query is already JSON or a plain string
         string payload;
@@ -76,7 +241,7 @@ public static class TaskEndpoints
         var task = new AgentTask
         {
             TaskId = Guid.NewGuid().ToString(),
-            ThreadId = request.ThreadId,
+            ThreadId = threadId,
             AgentType = agentType,
             Payload = payload,
             CreatedAt = DateTime.UtcNow
@@ -88,7 +253,14 @@ public static class TaskEndpoints
         // Enqueue task via messaging bus
         await messagingBus.SendTaskAsync(task, cancellationToken);
 
-        return Results.Created($"/api/tasks/{task.TaskId}", task);
+        // Return response with generated ThreadId
+        return Results.Created($"/api/tasks/{task.TaskId}", new
+        {
+            taskId = task.TaskId,
+            threadId = task.ThreadId,
+            agentType = task.AgentType,
+            status = "Pending"
+        });
     }
 
     private static async Task<IResult> GetTask(

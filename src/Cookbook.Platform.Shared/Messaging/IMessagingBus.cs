@@ -149,5 +149,22 @@ public enum TaskStatus
     Running,
     Completed,
     Failed,
-    Cancelled
+    Cancelled,
+    /// <summary>
+    /// Task has completed extraction and is awaiting human review.
+    /// </summary>
+    ReviewReady,
+    /// <summary>
+    /// Draft was committed and converted to a canonical Recipe.
+    /// </summary>
+    Committed,
+    /// <summary>
+    /// Draft was explicitly rejected by user.
+    /// </summary>
+    Rejected,
+    /// <summary>
+    /// Draft expired without being committed or rejected.
+    /// </summary>
+    Expired
 }
+
