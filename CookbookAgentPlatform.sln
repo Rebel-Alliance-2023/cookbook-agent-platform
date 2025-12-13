@@ -32,9 +32,22 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Docs", "Docs", "{FC8E10D5-A
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Specification", "Specification", "{F0DE8ED5-FA50-4166-A60C-3F8FBCE9C330}"
 	ProjectSection(SolutionItems) = preProject
-		CookBookAgentSpec.md = CookBookAgentSpec.md
-		Feature Specification - Recipe Ingest Agent.md = Feature Specification - Recipe Ingest Agent.md
-		Implementation Plan A - Recipe Ingest Agent.md = Implementation Plan A - Recipe Ingest Agent.md
+		docs\Specifications\Phase 1 - CookBookAgentSpec.md = docs\Specifications\Phase 1 - CookBookAgentSpec.md
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Features", "Features", "{AE6195E5-BD3F-4A84-8042-3FEA5F64D1CB}"
+	ProjectSection(SolutionItems) = preProject
+		docs\Specifications\Features\Feature Specification - Recipe Ingest Agent.md = docs\Specifications\Features\Feature Specification - Recipe Ingest Agent.md
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Plans", "Plans", "{F5B58423-E6C2-47F2-91FC-61DBA623A84F}"
+	ProjectSection(SolutionItems) = preProject
+		docs\Implementation Plans\Implementation Plan A - Recipe Ingest Agent.md = docs\Implementation Plans\Implementation Plan A - Recipe Ingest Agent.md
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tasks", "Tasks", "{46FBE4B8-E7A6-4B68-9FF7-0D6B5460E75E}"
+	ProjectSection(SolutionItems) = preProject
+		docs\Tasks\Plan A Tasks - Recipe Ingest Agent.md = docs\Tasks\Plan A Tasks - Recipe Ingest Agent.md
 	EndProjectSection
 EndProject
 Global
@@ -104,6 +117,9 @@ Global
 		{C1B2C3D4-0008-0000-0000-000000000001} = {A1B2C3D4-0002-0000-0000-000000000001}
 		{C1B2C3D4-0009-0000-0000-000000000001} = {A1B2C3D4-0002-0000-0000-000000000001}
 		{F0DE8ED5-FA50-4166-A60C-3F8FBCE9C330} = {FC8E10D5-A509-444B-A6F5-7545545617D6}
+		{AE6195E5-BD3F-4A84-8042-3FEA5F64D1CB} = {F0DE8ED5-FA50-4166-A60C-3F8FBCE9C330}
+		{F5B58423-E6C2-47F2-91FC-61DBA623A84F} = {F0DE8ED5-FA50-4166-A60C-3F8FBCE9C330}
+		{46FBE4B8-E7A6-4B68-9FF7-0D6B5460E75E} = {F0DE8ED5-FA50-4166-A60C-3F8FBCE9C330}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {F51E3402-B90A-498D-8E70-584F914FD124}
