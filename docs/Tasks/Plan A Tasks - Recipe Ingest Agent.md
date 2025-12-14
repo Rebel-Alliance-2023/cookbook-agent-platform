@@ -27,7 +27,7 @@
 | M0-005 | Create `ArtifactRef` record with `Type` and `Uri` properties | XS | P0 | - | [ ] |
 | M0-006 | Create `RecipeDraft` record wrapping `Recipe`, `RecipeSource`, `ValidationReport`, optional `SimilarityReport`, `List<ArtifactRef>` | S | P0 | M0-001 to M0-005 | [ ] |
 | M0-007 | Add JSON serialization attributes to all new models | S | P1 | M0-001 to M0-006 | [ ] |
-| M0-008 | Write unit tests for model serialization round-trips | M | P1 | M0-007 | [ ] |
+| M0-008 | Write unit tests for model serialization round-trips | M | P1 | M0-007 | [ ]
 
 ### URL Normalization Utilities
 
@@ -252,36 +252,36 @@
 
 | ID | Task | Size | Priority | Deps | Status |
 |----|------|------|----------|------|--------|
-| M2-019 | Implement `POST /api/tasks/{taskId}/reject` | M | P0 | - | [ ] |
-| M2-020 | Validate task is ReviewReady | S | P0 | M2-019 | [ ] |
-| M2-021 | Transition to Rejected status | S | P0 | M2-019 | [ ] |
-| M2-022 | Return 200 with terminal state | S | P0 | M2-019 | [ ] |
-| M2-023 | Block commit for rejected tasks | S | P0 | M2-021, M2-003 | [ ] |
-| M2-024 | Test: reject blocks commit | M | P0 | M2-023 | [ ] |
+| M2-019 | Implement `POST /api/tasks/{taskId}/reject` | M | P0 | - | [x] |
+| M2-020 | Validate task is ReviewReady | S | P0 | M2-019 | [x] |
+| M2-021 | Transition to Rejected status | S | P0 | M2-019 | [x] |
+| M2-022 | Return 200 with terminal state | S | P0 | M2-019 | [x] |
+| M2-023 | Block commit for rejected tasks | S | P0 | M2-021, M2-003 | [x] |
+| M2-024 | Test: reject blocks commit | M | P0 | M2-023 | [x] |
 
 ### Expiration Job
 
 | ID | Task | Size | Priority | Deps | Status |
 |----|------|------|----------|------|--------|
-| M2-025 | Create `DraftExpirationService` BackgroundService | M | P0 | M0-015 | [ ] |
-| M2-026 | Query for stale ReviewReady tasks | M | P0 | M2-025 | [ ] |
-| M2-027 | Transition to Expired status | S | P0 | M2-026 | [ ] |
-| M2-028 | Configure run interval | S | P1 | M2-025 | [ ] |
-| M2-029 | Register in Aspire AppHost | S | P0 | M2-025 | [ ] |
-| M2-030 | Test: expiration marks stale tasks | M | P1 | M2-027 | [ ] |
+| M2-025 | Create `DraftExpirationService` BackgroundService | M | P0 | M0-015 | [x] |
+| M2-026 | Query for stale ReviewReady tasks | M | P0 | M2-025 | [x] |
+| M2-027 | Transition to Expired status | S | P0 | M2-026 | [x] |
+| M2-028 | Configure run interval | S | P1 | M2-025 | [x] |
+| M2-029 | Register in Aspire AppHost | S | P0 | M2-025 | [x] |
+| M2-030 | Test: expiration marks stale tasks | M | P1 | M2-027 | [x] |
 
 ### UI Actions
 
 | ID | Task | Size | Priority | Deps | Status |
 |----|------|------|----------|------|--------|
-| M2-031 | Add Commit button to ReviewReady | S | P0 | M1-075 | [ ] |
-| M2-032 | Implement Commit action | M | P0 | M2-031, M2-003 | [ ] |
-| M2-033 | Show success with recipe link | S | P0 | M2-032 | [ ] |
-| M2-034 | Show error messages | S | P0 | M2-032 | [ ] |
-| M2-035 | Add Reject button | S | P0 | M1-075 | [ ] |
-| M2-036 | Implement Reject action | M | P0 | M2-035, M2-019 | [ ] |
-| M2-037 | Add terminal state indicators | M | P1 | M1-075 | [ ] |
-| M2-038 | Disable buttons on terminal states | S | P1 | M2-037 | [ ] |
+| M2-031 | Add Commit button to ReviewReady | S | P0 | M1-075 | [x] |
+| M2-032 | Implement Commit action | M | P0 | M2-031, M2-003 | [x] |
+| M2-033 | Show success with recipe link | S | P0 | M2-032 | [x] |
+| M2-034 | Show error messages | S | P0 | M2-032 | [x] |
+| M2-035 | Add Reject button | S | P0 | M1-075 | [x] |
+| M2-036 | Implement Reject action | M | P0 | M2-035, M2-019 | [x] |
+| M2-037 | Add terminal state indicators | M | P1 | M1-075 | [x] |
+| M2-038 | Disable buttons on terminal states | S | P1 | M2-037 | [x] |
 
 ---
 
@@ -291,48 +291,48 @@
 
 | ID | Task | Size | Priority | Deps | Status |
 |----|------|------|----------|------|--------|
-| M3-001 | Create `ISimilarityDetector` interface | S | P0 | M0-004 | [ ] |
-| M3-002 | Implement tokenization | M | P0 | M3-001 | [ ] |
-| M3-003 | Implement contiguous token overlap detection | L | P0 | M3-002 | [ ] |
-| M3-004 | Implement 5-gram Jaccard similarity | L | P0 | M3-002 | [ ] |
-| M3-005 | Produce SimilarityReport | M | P0 | M3-003, M3-004 | [ ] |
-| M3-006 | Test: tokenization | S | P1 | M3-002 | [ ] |
-| M3-007 | Test: token overlap | M | P1 | M3-003 | [ ] |
-| M3-008 | Test: Jaccard similarity | M | P1 | M3-004 | [ ] |
+| M3-001 | Create `ISimilarityDetector` interface | S | P0 | M0-004 | [x] |
+| M3-002 | Implement tokenization | M | P0 | M3-001 | [x] |
+| M3-003 | Implement contiguous token overlap detection | L | P0 | M3-002 | [x] |
+| M3-004 | Implement 5-gram Jaccard similarity | L | P0 | M3-002 | [x] |
+| M3-005 | Produce SimilarityReport | M | P0 | M3-003, M3-004 | [x] |
+| M3-006 | Test: tokenization | S | P1 | M3-002 | [x] |
+| M3-007 | Test: token overlap | M | P1 | M3-003 | [x] |
+| M3-008 | Test: Jaccard similarity | M | P1 | M3-004 | [x] |
 
 ### Integration into Validate
 
 | ID | Task | Size | Priority | Deps | Status |
 |----|------|------|----------|------|--------|
-| M3-009 | Add similarity check in Validate phase | M | P0 | M1-009, M3-001 | [ ] |
-| M3-010 | Compare source vs Description/Instructions | M | P0 | M3-009 | [ ] |
-| M3-011 | Add to ValidationReport | S | P0 | M3-010 | [ ] |
-| M3-012 | Add SimilarityReport to RecipeDraft | S | P0 | M3-010 | [ ] |
-| M3-013 | Store similarity.json artifact | S | P0 | M3-010 | [ ] |
+| M3-009 | Add similarity check in Validate phase | M | P0 | M1-009, M3-001 | [x] |
+| M3-010 | Compare source vs Description/Instructions | M | P0 | M3-009 | [x] |
+| M3-011 | Add to ValidationReport | S | P0 | M3-010 | [x] |
+| M3-012 | Add SimilarityReport to RecipeDraft | S | P0 | M3-010 | [x] |
+| M3-013 | Store similarity.json artifact | S | P0 | M3-010 | [x] |
 
 ### RepairParaphrase
 
 | ID | Task | Size | Priority | Deps | Status |
 |----|------|------|----------|------|--------|
-| M3-014 | Create repair paraphrase prompt template | M | P0 | M0-039 | [ ] |
-| M3-015 | Implement RepairParaphrase phase | L | P0 | M1-009 | [ ] |
-| M3-016 | Trigger if AutoRepair enabled and error threshold exceeded | M | P0 | M3-015, M0-016 | [ ] |
-| M3-017 | Prompt LLM to rephrase sections | M | P0 | M3-015 | [ ] |
-| M3-018 | Re-run similarity check | M | P0 | M3-017 | [ ] |
-| M3-019 | Store repair artifact | S | P0 | M3-017 | [ ] |
-| M3-020 | Mark as error if still violating | S | P0 | M3-018 | [ ] |
-| M3-021 | Test: high similarity triggers warning | M | P1 | M3-011 | [ ] |
-| M3-022 | Test: AutoRepair reduces similarity | M | P1 | M3-018 | [ ] |
+| M3-014 | Create repair paraphrase prompt template | M | P0 | M0-039 | [x] |
+| M3-015 | Implement RepairParaphrase phase | L | P0 | M1-009 | [x] |
+| M3-016 | Trigger if AutoRepair enabled and error threshold exceeded | M | P0 | M3-015, M0-016 | [x] |
+| M3-017 | Prompt LLM to rephrase sections | M | P0 | M3-015 | [x] |
+| M3-018 | Re-run similarity check | M | P0 | M3-017 | [x] |
+| M3-019 | Store repair artifact | S | P0 | M3-017 | [x] |
+| M3-020 | Mark as error if still violating | S | P0 | M3-018 | [x] |
+| M3-021 | Test: high similarity triggers warning | M | P1 | M3-011 | [x] |
+| M3-022 | Test: AutoRepair reduces similarity | M | P1 | M3-018 | [x] |
 
 ### UI
 
 | ID | Task | Size | Priority | Deps | Status |
 |----|------|------|----------|------|--------|
-| M3-023 | Add SimilarityReport section to ReviewReady | M | P0 | M1-075 | [ ] |
-| M3-024 | Show overlap and similarity values | S | P0 | M3-023 | [ ] |
-| M3-025 | Show policy status | S | P0 | M3-023 | [ ] |
-| M3-026 | Indicate repair attempt outcome | S | P1 | M3-023 | [ ] |
-| M3-027 | Block commit if error and repair failed | M | P0 | M3-020, M2-031 | [ ] |
+| M3-023 | Add SimilarityReport section to ReviewReady | M | P0 | M1-075 | [x] |
+| M3-024 | Show overlap and similarity values | S | P0 | M3-023 | [x] |
+| M3-025 | Show policy status | S | P0 | M3-023 | [x] |
+| M3-026 | Indicate repair attempt outcome | S | P1 | M3-023 | [x] |
+| M3-027 | Block commit if error and repair failed | M | P0 | M3-020, M2-031 | [x] |
 
 ---
 
@@ -654,6 +654,7 @@ M5-003 (Normalize Phase) ? M5-017 (POST /api/recipes/{id}/apply-patch) ? M5-019 
 ???????????????????????????????????????????????????????????????????????????????????
 ? M2: Commit + Lifecycle                                                          ?
 ?   Commit: M2-003 ? M2-013 ? M2-014                                             ?
+?   Reject: M2-019 ? M2-021 ? M2-022 ? M2-023 ? M2-024                           ?
 ???????????????????????????????????????????????????????????????????????????????????
                 ?
                 ?

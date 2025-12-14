@@ -1,8 +1,10 @@
 using System.Text.Json;
 using Cookbook.Platform.Orchestrator.Services.Ingest;
+using Cookbook.Platform.Shared.Configuration;
 using Cookbook.Platform.Shared.Messaging;
 using Cookbook.Platform.Shared.Models.Ingest;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Moq;
 using Xunit;
 
@@ -14,14 +16,29 @@ namespace Cookbook.Platform.Orchestrator.Tests.Services.Ingest;
 public class IngestPhaseRunnerTests
 {
     private readonly Mock<IMessagingBus> _messagingBusMock;
+    private readonly Mock<ISimilarityDetector> _similarityDetectorMock;
+    private readonly Mock<IRepairParaphraseService> _repairServiceMock;
+    private readonly Mock<IArtifactStorageService> _artifactStorageMock;
+    private readonly Mock<IOptions<IngestGuardrailOptions>> _guardrailOptionsMock;
     private readonly Mock<ILogger<IngestPhaseRunner>> _loggerMock;
     private readonly IngestPhaseRunner _runner;
 
     public IngestPhaseRunnerTests()
     {
         _messagingBusMock = new Mock<IMessagingBus>();
+        _similarityDetectorMock = new Mock<ISimilarityDetector>();
+        _repairServiceMock = new Mock<IRepairParaphraseService>();
+        _artifactStorageMock = new Mock<IArtifactStorageService>();
+        _guardrailOptionsMock = new Mock<IOptions<IngestGuardrailOptions>>();
+        _guardrailOptionsMock.Setup(o => o.Value).Returns(new IngestGuardrailOptions());
         _loggerMock = new Mock<ILogger<IngestPhaseRunner>>();
-        _runner = new IngestPhaseRunner(_messagingBusMock.Object, _loggerMock.Object);
+        _runner = new IngestPhaseRunner(
+            _messagingBusMock.Object,
+            _similarityDetectorMock.Object,
+            _repairServiceMock.Object,
+            _artifactStorageMock.Object,
+            _guardrailOptionsMock.Object,
+            _loggerMock.Object);
     }
 
     #region Phase Constants Tests
@@ -32,6 +49,7 @@ public class IngestPhaseRunnerTests
         Assert.Equal("Ingest.Fetch", IngestPhases.Fetch);
         Assert.Equal("Ingest.Extract", IngestPhases.Extract);
         Assert.Equal("Ingest.Validate", IngestPhases.Validate);
+        Assert.Equal("Ingest.RepairParaphrase", IngestPhases.RepairParaphrase);
         Assert.Equal("Ingest.ReviewReady", IngestPhases.ReviewReady);
     }
 
@@ -41,6 +59,7 @@ public class IngestPhaseRunnerTests
         var total = IngestPhases.Weights.Fetch 
             + IngestPhases.Weights.Extract 
             + IngestPhases.Weights.Validate 
+            + IngestPhases.Weights.RepairParaphrase
             + IngestPhases.Weights.ReviewReady
             + IngestPhases.Weights.Finalize;
         
@@ -48,10 +67,11 @@ public class IngestPhaseRunnerTests
     }
 
     [Theory]
-    [InlineData(IngestPhases.Fetch, 100, 15)]
-    [InlineData(IngestPhases.Extract, 100, 55)] // 15 + 40
-    [InlineData(IngestPhases.Validate, 100, 80)] // 15 + 40 + 25
-    [InlineData(IngestPhases.ReviewReady, 100, 90)] // 15 + 40 + 25 + 10
+    [InlineData(IngestPhases.Fetch, 100, 15)]                    // 15
+    [InlineData(IngestPhases.Extract, 100, 50)]                  // 15 + 35
+    [InlineData(IngestPhases.Validate, 100, 70)]                 // 15 + 35 + 20
+    [InlineData(IngestPhases.RepairParaphrase, 100, 85)]         // 15 + 35 + 20 + 15
+    [InlineData(IngestPhases.ReviewReady, 100, 95)]              // 15 + 35 + 20 + 15 + 10
     public void CalculateProgress_ReturnsCorrectCumulativeProgress(string phase, int phaseProgress, int expected)
     {
         var result = IngestPhaseRunner.CalculateProgress(phase, phaseProgress);
@@ -59,8 +79,8 @@ public class IngestPhaseRunnerTests
     }
 
     [Theory]
-    [InlineData(IngestPhases.Fetch, 50, 7)] // 15 * 0.5 = 7.5 -> 7
-    [InlineData(IngestPhases.Extract, 50, 35)] // 15 + (40 * 0.5) = 35
+    [InlineData(IngestPhases.Fetch, 50, 7)]                      // 15 * 0.5 = 7.5 -> 7
+    [InlineData(IngestPhases.Extract, 50, 32)]                   // 15 + (35 * 0.5) = 32.5 -> 32
     public void CalculateProgress_HandlesPartialPhaseProgress(string phase, int phaseProgress, int expected)
     {
         var result = IngestPhaseRunner.CalculateProgress(phase, phaseProgress);
@@ -148,6 +168,7 @@ public class IngestPhaseRunnerTests
         Assert.Contains(progressUpdates, p => p.Phase == IngestPhases.Fetch);
         Assert.Contains(progressUpdates, p => p.Phase == IngestPhases.Extract);
         Assert.Contains(progressUpdates, p => p.Phase == IngestPhases.Validate);
+        Assert.Contains(progressUpdates, p => p.Phase == IngestPhases.RepairParaphrase);
         Assert.Contains(progressUpdates, p => p.Phase == IngestPhases.ReviewReady);
     }
 

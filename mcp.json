@@ -1,0 +1,11 @@
+{
+  "servers": {
+    "time-tracker": {
+      "type": "stdio",
+      "command": "E:/Archive/GitHub/dlandi/Time-Tracker-MCP-Tool/publish/win-x64/TimeTrackerMcp.exe",
+      "args": [],
+      "env": {},
+      "workingDirectory": "E:/Archive/GitHub/dlandi/Time-Tracker-MCP-Tool/publish/win-x64"
+    }
+  }
+}

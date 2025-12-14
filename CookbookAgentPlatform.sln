@@ -29,10 +29,15 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cookbook.Platform.A2A.Analysis", "src\Cookbook.Platform.A2A.Analysis\Cookbook.Platform.A2A.Analysis.csproj", "{C1B2C3D4-0009-0000-0000-000000000001}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Docs", "Docs", "{FC8E10D5-A509-444B-A6F5-7545545617D6}"
+	ProjectSection(SolutionItems) = preProject
+		prompts.md = prompts.md
+		docs\TimeTracker-README.md = docs\TimeTracker-README.md
+	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Specification", "Specification", "{F0DE8ED5-FA50-4166-A60C-3F8FBCE9C330}"
 	ProjectSection(SolutionItems) = preProject
 		docs\Specifications\Phase 1 - CookBookAgentSpec.md = docs\Specifications\Phase 1 - CookBookAgentSpec.md
+		Time Tracker MCP Tool Specification.md = Time Tracker MCP Tool Specification.md
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Features", "Features", "{AE6195E5-BD3F-4A84-8042-3FEA5F64D1CB}"
@@ -42,6 +47,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Features", "Features", "{AE
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Plans", "Plans", "{F5B58423-E6C2-47F2-91FC-61DBA623A84F}"
 	ProjectSection(SolutionItems) = preProject
+		Implementation Plan - Time Tracker MCP Tool.md = Implementation Plan - Time Tracker MCP Tool.md
 		docs\Implementation Plans\Implementation Plan A - Recipe Ingest Agent (Updated - Dual Search Providers).md = docs\Implementation Plans\Implementation Plan A - Recipe Ingest Agent (Updated - Dual Search Providers).md
 		docs\Implementation Plans\Implementation Plan A - Recipe Ingest Agent.md = docs\Implementation Plans\Implementation Plan A - Recipe Ingest Agent.md
 	EndProjectSection
@@ -61,6 +67,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Reports", "Reports", "{4E85
 		Milestone-1-execution-report Part 2.md = Milestone-1-execution-report Part 2.md
 		Milestone-1-execution-report.md = Milestone-1-execution-report.md
 		Milestone-2-execution-report.md = Milestone-2-execution-report.md
+		Milestone-3-execution-report.md = Milestone-3-execution-report.md
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cookbook.Platform.Orchestrator.Tests", "tests\Cookbook.Platform.Orchestrator.Tests\Cookbook.Platform.Orchestrator.Tests.csproj", "{9500580A-739D-298C-87B7-A9FE2499E9CC}"

@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Cookbook.Platform.Gateway.Services;
 using Cookbook.Platform.Shared.Agents;
 using Cookbook.Platform.Shared.Messaging;
 using Cookbook.Platform.Shared.Models.Ingest;
@@ -35,6 +36,12 @@ public static class TaskEndpoints
         group.MapPost("/{taskId}/cancel", CancelTask)
             .WithName("CancelTask")
             .WithSummary("Cancels a running task");
+
+        group.MapPost("/{taskId}/reject", RejectTask)
+            .WithName("RejectTask")
+            .WithSummary("Rejects a task in ReviewReady state, transitioning it to the Rejected terminal state")
+            .WithDescription("Only tasks in ReviewReady state can be rejected. " +
+                           "Rejected tasks cannot be committed. This operation is idempotent.");
 
         group.MapGet("/{taskId}/artifacts", GetTaskArtifacts)
             .WithName("GetTaskArtifacts")
@@ -297,5 +304,33 @@ public static class TaskEndpoints
     {
         var artifacts = await artifactRepository.GetByTaskIdAsync(taskId, cancellationToken);
         return Results.Ok(artifacts);
+    }
+
+    /// <summary>
+    /// Rejects a task in ReviewReady state, transitioning it to the Rejected terminal state.
+    /// </summary>
+    /// <remarks>
+    /// This endpoint handles:
+    /// - Task state validation (must be ReviewReady)
+    /// - Idempotency (returns 200 if already rejected)
+    /// - Terminal state blocking (returns 400 if already committed/expired)
+    /// </remarks>
+    private static async Task<IResult> RejectTask(
+        string taskId,
+        RejectTaskRequest? request,
+        ITaskRejectService rejectService,
+        CancellationToken cancellationToken)
+    {
+        var result = await rejectService.RejectAsync(taskId, request?.Reason, cancellationToken);
+
+        return result.StatusCode switch
+        {
+            200 => Results.Ok(result.Response),
+            400 => Results.BadRequest(result.Error),
+            404 => Results.NotFound(result.Error),
+            _ => Results.Problem(
+                statusCode: result.StatusCode,
+                detail: result.Error?.Message ?? "An error occurred")
+        };
     }
 }

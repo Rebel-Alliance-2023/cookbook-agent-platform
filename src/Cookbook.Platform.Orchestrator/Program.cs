@@ -30,6 +30,8 @@ builder.Services.AddBlobStorage(builder.Configuration);
 // Add Ingest options
 builder.Services.Configure<IngestOptions>(
     builder.Configuration.GetSection(IngestOptions.SectionName));
+builder.Services.Configure<IngestGuardrailOptions>(
+    builder.Configuration.GetSection(IngestGuardrailOptions.SectionName));
 
 // Add orchestrator services
 builder.Services.AddSingleton<OrchestratorService>();
@@ -50,10 +52,20 @@ builder.Services.AddSingleton<RecipeExtractionOrchestrator>();
 // Add Recipe Validation services
 builder.Services.AddSingleton<IRecipeValidator, RecipeValidator>();
 
+// Add Similarity Detection services
+builder.Services.Configure<SimilarityOptions>(
+    builder.Configuration.GetSection("Ingest:Similarity"));
+builder.Services.AddSingleton<ISimilarityDetector, SimilarityDetector>();
+
+// Add Repair Paraphrase services
+builder.Services.AddSingleton<IRepairParaphraseService, RepairParaphraseService>();
+
 // Add Artifact Storage services
 builder.Services.AddSingleton<IArtifactStorageService, BlobArtifactStorageService>();
 
+// Add background services
 builder.Services.AddHostedService<TaskProcessorService>();
+builder.Services.AddHostedService<DraftExpirationService>();
 
 // Add HTTP clients for A2A agents with service discovery
 builder.Services.AddHttpClient("ResearchAgent", client =>

@@ -30,6 +30,7 @@ builder.Services.AddBlobStorage(builder.Configuration);
 
 // Add Gateway services
 builder.Services.AddScoped<IRecipeImportService, RecipeImportService>();
+builder.Services.AddScoped<ITaskRejectService, TaskRejectService>();
 
 // Add CORS for Blazor client
 builder.Services.AddCors(options =>
