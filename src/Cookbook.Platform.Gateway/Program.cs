@@ -1,5 +1,7 @@
 using Cookbook.Platform.Gateway.Endpoints;
+using Cookbook.Platform.Gateway.Services;
 using Cookbook.Platform.Infrastructure;
+using Cookbook.Platform.Shared.Configuration;
 using Cookbook.Platform.Storage;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -16,12 +18,18 @@ builder.AddAzureCosmosClient("cosmos");
 // Add Blob Storage for artifact downloads
 builder.AddAzureBlobClient("blobs");
 
+// Add configuration options
+builder.Services.AddIngestOptions(builder.Configuration);
+
 // Add infrastructure services
 builder.Services.AddMessagingBus(builder.Configuration);
 
 // Add storage services
 builder.Services.AddCosmosRepositories(builder.Configuration);
 builder.Services.AddBlobStorage(builder.Configuration);
+
+// Add Gateway services
+builder.Services.AddScoped<IRecipeImportService, RecipeImportService>();
 
 // Add CORS for Blazor client
 builder.Services.AddCors(options =>

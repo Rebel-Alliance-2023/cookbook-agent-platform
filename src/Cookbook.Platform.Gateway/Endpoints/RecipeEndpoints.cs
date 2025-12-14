@@ -1,4 +1,6 @@
+using Cookbook.Platform.Gateway.Services;
 using Cookbook.Platform.Shared.Models;
+using Cookbook.Platform.Shared.Models.Ingest;
 using Cookbook.Platform.Storage.Repositories;
 
 namespace Cookbook.Platform.Gateway.Endpoints;
@@ -24,6 +26,12 @@ public static class RecipeEndpoints
         group.MapPost("/", CreateRecipe)
             .WithName("CreateRecipe")
             .WithSummary("Creates a new recipe");
+
+        group.MapPost("/import", ImportRecipe)
+            .WithName("ImportRecipe")
+            .WithSummary("Imports a recipe draft from an ingest task")
+            .WithDescription("Commits a reviewed recipe draft to the permanent recipe collection. " +
+                           "Supports idempotency, optimistic concurrency via ETag, and duplicate detection.");
 
         return endpoints;
     }
@@ -56,5 +64,45 @@ public static class RecipeEndpoints
     {
         var created = await recipeRepository.CreateAsync(recipe, cancellationToken);
         return Results.Created($"/api/recipes/{created.Id}", created);
+    }
+
+    /// <summary>
+    /// Imports a recipe draft from an ingest task, committing it to the permanent recipe collection.
+    /// </summary>
+    /// <remarks>
+    /// This endpoint handles:
+    /// - Task state validation (must be ReviewReady)
+    /// - Expiration checking (returns 410 if expired)
+    /// - Idempotency (returns 200 if already committed)
+    /// - Optimistic concurrency via ETag (returns 409 on mismatch)
+    /// - Duplicate detection by URL hash
+    /// </remarks>
+    private static async Task<IResult> ImportRecipe(
+        ImportRecipeRequest request,
+        IRecipeImportService importService,
+        CancellationToken cancellationToken)
+    {
+        var result = await importService.ImportAsync(request, cancellationToken);
+
+        return result.StatusCode switch
+        {
+            200 => Results.Ok(result.Response),
+            201 => Results.Created($"/api/recipes/{result.Response!.RecipeId}", result.Response),
+            400 => Results.BadRequest(result.Error),
+            404 => Results.NotFound(result.Error),
+            409 => Results.Conflict(result.Error),
+            410 => Results.Problem(
+                statusCode: 410,
+                title: "Gone",
+                detail: result.Error!.Message,
+                extensions: new Dictionary<string, object?>
+                {
+                    ["code"] = result.Error.Code,
+                    ["taskId"] = result.Error.TaskId
+                }),
+            _ => Results.Problem(
+                statusCode: result.StatusCode,
+                detail: result.Error?.Message ?? "An error occurred")
+        };
     }
 }

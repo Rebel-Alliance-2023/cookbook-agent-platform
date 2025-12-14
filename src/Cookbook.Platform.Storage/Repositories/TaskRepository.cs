@@ -2,6 +2,7 @@ using Cookbook.Platform.Shared.Messaging;
 using Cookbook.Platform.Shared.Models;
 using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.Logging;
+using System.Net;
 
 namespace Cookbook.Platform.Storage.Repositories;
 
@@ -26,9 +27,25 @@ public class TaskRepository
             var response = await _container.ReadItemAsync<AgentTask>(taskId, new PartitionKey(taskId), cancellationToken: cancellationToken);
             return response.Resource;
         }
-        catch (CosmosException ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
+        catch (CosmosException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
         {
             return null;
+        }
+    }
+
+    /// <summary>
+    /// Gets a task by ID with its ETag for optimistic concurrency.
+    /// </summary>
+    public async Task<(AgentTask? Task, string? ETag)> GetByIdWithETagAsync(string taskId, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var response = await _container.ReadItemAsync<AgentTask>(taskId, new PartitionKey(taskId), cancellationToken: cancellationToken);
+            return (response.Resource, response.ETag);
+        }
+        catch (CosmosException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
+        {
+            return (null, null);
         }
     }
 
@@ -54,6 +71,80 @@ public class TaskRepository
         var response = await _container.CreateItemAsync(task, new PartitionKey(task.TaskId), cancellationToken: cancellationToken);
         _logger.LogInformation("Created task {TaskId} for agent {AgentType}", task.TaskId, task.AgentType);
         return response.Resource;
+    }
+
+    /// <summary>
+    /// Updates a task with optimistic concurrency using ETag.
+    /// </summary>
+    /// <param name="task">The updated task.</param>
+    /// <param name="etag">The ETag from the original read. If null, no concurrency check is performed.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The updated task and new ETag.</returns>
+    /// <exception cref="TaskConcurrencyException">Thrown when ETag doesn't match (409 Conflict).</exception>
+    public async Task<(AgentTask Task, string ETag)> UpdateAsync(AgentTask task, string? etag = null, CancellationToken cancellationToken = default)
+    {
+        var requestOptions = new ItemRequestOptions();
+        
+        if (!string.IsNullOrEmpty(etag))
+        {
+            requestOptions.IfMatchEtag = etag;
+        }
+
+        try
+        {
+            var response = await _container.ReplaceItemAsync(
+                task, 
+                task.TaskId, 
+                new PartitionKey(task.TaskId), 
+                requestOptions, 
+                cancellationToken);
+            
+            _logger.LogInformation("Updated task {TaskId}, new ETag: {ETag}", task.TaskId, response.ETag);
+            return (response.Resource, response.ETag);
+        }
+        catch (CosmosException ex) when (ex.StatusCode == HttpStatusCode.PreconditionFailed)
+        {
+            _logger.LogWarning("Concurrency conflict updating task {TaskId}. ETag mismatch.", task.TaskId);
+            throw new TaskConcurrencyException(task.TaskId, etag ?? "unknown");
+        }
+    }
+
+    /// <summary>
+    /// Updates specific metadata fields on a task.
+    /// </summary>
+    public async Task<AgentTask> UpdateMetadataAsync(string taskId, Dictionary<string, string> metadata, CancellationToken cancellationToken = default)
+    {
+        var (task, etag) = await GetByIdWithETagAsync(taskId, cancellationToken);
+        if (task == null)
+        {
+            throw new InvalidOperationException($"Task {taskId} not found");
+        }
+
+        var updatedMetadata = new Dictionary<string, string>(task.Metadata);
+        foreach (var kvp in metadata)
+        {
+            updatedMetadata[kvp.Key] = kvp.Value;
+        }
+
+        var updatedTask = task with { Metadata = updatedMetadata };
+        var (result, _) = await UpdateAsync(updatedTask, etag, cancellationToken);
+        return result;
+    }
+}
+
+/// <summary>
+/// Exception thrown when a task update fails due to ETag mismatch.
+/// </summary>
+public class TaskConcurrencyException : Exception
+{
+    public string TaskId { get; }
+    public string ExpectedETag { get; }
+
+    public TaskConcurrencyException(string taskId, string expectedETag)
+        : base($"Concurrency conflict updating task {taskId}. The task was modified by another request.")
+    {
+        TaskId = taskId;
+        ExpectedETag = expectedETag;
     }
 }
 

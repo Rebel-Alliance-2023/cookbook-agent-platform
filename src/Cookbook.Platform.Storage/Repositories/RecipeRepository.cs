@@ -1,6 +1,7 @@
 using Cookbook.Platform.Shared.Models;
 using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.Logging;
+using System.Net;
 
 namespace Cookbook.Platform.Storage.Repositories;
 
@@ -25,10 +26,47 @@ public class RecipeRepository
             var response = await _container.ReadItemAsync<Recipe>(id, new PartitionKey(id), cancellationToken: cancellationToken);
             return response.Resource;
         }
-        catch (CosmosException ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
+        catch (CosmosException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
         {
             return null;
         }
+    }
+
+    /// <summary>
+    /// Finds recipes by their source URL hash for duplicate detection.
+    /// </summary>
+    /// <param name="urlHash">The base64url-encoded hash of the normalized source URL.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>List of recipes matching the URL hash.</returns>
+    public async Task<List<Recipe>> FindByUrlHashAsync(string urlHash, CancellationToken cancellationToken = default)
+    {
+        // Query for recipes where source.urlHash matches
+        var query = new QueryDefinition("SELECT * FROM c WHERE c.source.urlHash = @urlHash")
+            .WithParameter("@urlHash", urlHash);
+
+        var results = new List<Recipe>();
+        using var iterator = _container.GetItemQueryIterator<Recipe>(query);
+        
+        while (iterator.HasMoreResults)
+        {
+            var response = await iterator.ReadNextAsync(cancellationToken);
+            results.AddRange(response);
+        }
+
+        _logger.LogDebug("Found {Count} recipes with URL hash {UrlHash}", results.Count, urlHash);
+        return results;
+    }
+
+    /// <summary>
+    /// Checks if a recipe with the given URL hash already exists.
+    /// </summary>
+    /// <param name="urlHash">The base64url-encoded hash of the normalized source URL.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The existing recipe if found, null otherwise.</returns>
+    public async Task<Recipe?> FindDuplicateByUrlHashAsync(string urlHash, CancellationToken cancellationToken = default)
+    {
+        var duplicates = await FindByUrlHashAsync(urlHash, cancellationToken);
+        return duplicates.FirstOrDefault();
     }
 
     public async Task<List<Recipe>> SearchAsync(string? query = null, string? diet = null, string? cuisine = null, int limit = 10, CancellationToken cancellationToken = default)
