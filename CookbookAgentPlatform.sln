@@ -29,9 +29,6 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cookbook.Platform.A2A.Analysis", "src\Cookbook.Platform.A2A.Analysis\Cookbook.Platform.A2A.Analysis.csproj", "{C1B2C3D4-0009-0000-0000-000000000001}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Docs", "Docs", "{FC8E10D5-A509-444B-A6F5-7545545617D6}"
-	ProjectSection(SolutionItems) = preProject
-		prompts.md = prompts.md
-	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Specification", "Specification", "{F0DE8ED5-FA50-4166-A60C-3F8FBCE9C330}"
 	ProjectSection(SolutionItems) = preProject
@@ -71,6 +68,11 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Reports", "Reports", "{4E85
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cookbook.Platform.Orchestrator.Tests", "tests\Cookbook.Platform.Orchestrator.Tests\Cookbook.Platform.Orchestrator.Tests.csproj", "{9500580A-739D-298C-87B7-A9FE2499E9CC}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Adhoc Prompts", "Adhoc Prompts", "{C0C6D425-DD56-42B2-A671-AAC03D488C30}"
+	ProjectSection(SolutionItems) = preProject
+		docs\Adhoc Prompts\prompts.md = docs\Adhoc Prompts\prompts.md
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -156,6 +158,7 @@ Global
 		{46FBE4B8-E7A6-4B68-9FF7-0D6B5460E75E} = {F0DE8ED5-FA50-4166-A60C-3F8FBCE9C330}
 		{43090433-7C8A-20FF-7A27-C08168542C70} = {FC8E10D5-A509-444B-A6F5-7545545617D6}
 		{4E85EFF4-279E-4273-BD77-45A6BFBB45AF} = {46FBE4B8-E7A6-4B68-9FF7-0D6B5460E75E}
+		{C0C6D425-DD56-42B2-A671-AAC03D488C30} = {FC8E10D5-A509-444B-A6F5-7545545617D6}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {F51E3402-B90A-498D-8E70-584F914FD124}
