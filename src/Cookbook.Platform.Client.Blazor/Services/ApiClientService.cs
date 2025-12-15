@@ -1,6 +1,7 @@
 using System.Net.Http.Json;
 using Cookbook.Platform.Shared.Models;
 using Cookbook.Platform.Shared.Models.Ingest;
+using Cookbook.Platform.Shared.Models.Ingest.Search;
 
 namespace Cookbook.Platform.Client.Blazor.Services;
 
@@ -106,6 +107,49 @@ public class ApiClientService
         var result = await response.Content.ReadFromJsonAsync<CreateIngestTaskResponse>();
         _logger.LogInformation("Created ingest task {TaskId} for URL {Url}", result?.TaskId, url);
         return result ?? throw new InvalidOperationException("Failed to create ingest task");
+    }
+
+    /// <summary>
+    /// Creates a new ingest task for searching and importing a recipe via query.
+    /// </summary>
+    public async Task<CreateIngestTaskResponse> CreateSearchIngestTaskAsync(
+        string query, 
+        string? searchProviderId = null, 
+        string? threadId = null)
+    {
+        var client = CreateClient();
+        var request = new
+        {
+            AgentType = "Ingest",
+            ThreadId = threadId,
+            Payload = new
+            {
+                Mode = "Query",
+                Query = query,
+                Search = new
+                {
+                    ProviderId = searchProviderId
+                }
+            }
+        };
+
+        var response = await client.PostAsJsonAsync("/api/tasks/ingest", request);
+        response.EnsureSuccessStatusCode();
+
+        var result = await response.Content.ReadFromJsonAsync<CreateIngestTaskResponse>();
+        _logger.LogInformation("Created search task {TaskId} for query '{Query}' with provider {ProviderId}", 
+            result?.TaskId, query, searchProviderId);
+        return result ?? throw new InvalidOperationException("Failed to create search task");
+    }
+
+    /// <summary>
+    /// Gets available search providers for recipe discovery.
+    /// </summary>
+    public async Task<SearchProvidersResponse> GetSearchProvidersAsync()
+    {
+        var client = CreateClient();
+        var response = await client.GetFromJsonAsync<SearchProvidersResponse>("/api/ingest/providers/search");
+        return response ?? throw new InvalidOperationException("Failed to get search providers");
     }
 
     /// <summary>

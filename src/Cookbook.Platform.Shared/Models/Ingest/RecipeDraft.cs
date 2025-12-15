@@ -38,6 +38,13 @@ public record RecipeDraft
     public SimilarityReport? SimilarityReport { get; init; }
 
     /// <summary>
+    /// Optional normalize patch response for Normalize mode.
+    /// </summary>
+    [JsonPropertyName("normalizePatchResponse")]
+    [JsonProperty("normalizePatchResponse")]
+    public NormalizePatchResponse? NormalizePatchResponse { get; init; }
+
+    /// <summary>
     /// References to artifacts stored during the ingest process.
     /// </summary>
     [JsonPropertyName("artifacts")]

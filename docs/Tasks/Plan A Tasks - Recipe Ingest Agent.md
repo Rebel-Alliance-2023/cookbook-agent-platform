@@ -342,111 +342,111 @@
 
 | ID | Task | Size | Priority | Deps | Status |
 |----|------|------|----------|------|--------|
-| M4-001 | Create `SearchRequest` record with query, maxResults, market/locale, safeSearch | S | P0 | - | [ ] |
-| M4-002 | Create `SearchCandidate` record with Url, Title, Snippet, SiteName, Score | S | P0 | - | [ ] |
-| M4-003 | Create `ISearchProvider` interface with SearchAsync method | S | P0 | M4-001, M4-002 | [ ] |
+| M4-001 | Create `SearchRequest` record with query, maxResults, market/locale, safeSearch | S | P0 | - | [x] |
+| M4-002 | Create `SearchCandidate` record with Url, Title, Snippet, SiteName, Score | S | P0 | - | [x] |
+| M4-003 | Create `ISearchProvider` interface with SearchAsync method | S | P0 | M4-001, M4-002 | [x] |
 
 ### Brave Search Implementation
 
 | ID | Task | Size | Priority | Deps | Status |
 |----|------|------|----------|------|--------|
-| M4-004 | Create `BraveSearchOptions` with ApiKey, Endpoint, Market, SafeSearch, MaxResults | S | P0 | - | [ ] |
-| M4-005 | Implement `BraveSearchProvider : ISearchProvider` | L | P0 | M4-003, M4-004 | [ ] |
-| M4-006 | Call Brave Search API and parse JSON response | M | P0 | M4-005 | [ ] |
-| M4-007 | Map Brave results to `SearchCandidate` | S | P0 | M4-006 | [ ] |
-| M4-008 | Add rate limiting per provider | S | P1 | M4-005 | [ ] |
-| M4-009 | Add allow/deny list filtering for domains | M | P1 | M4-007 | [ ] |
-| M4-010 | Store API key in user-secrets (`Ingest:Search:Brave:ApiKey`) | XS | P0 | M4-005 | [ ] |
-| M4-011 | Write Brave search unit tests | M | P1 | M4-005 | [ ] |
+| M4-004 | Create `BraveSearchOptions` with ApiKey, Endpoint, Market, SafeSearch, MaxResults | S | P0 | - | [x] |
+| M4-005 | Implement `BraveSearchProvider : ISearchProvider` | L | P0 | M4-003, M4-004 | [x] |
+| M4-006 | Call Brave Search API and parse JSON response | M | P0 | M4-005 | [x] |
+| M4-007 | Map Brave results to `SearchCandidate` | S | P0 | M4-006 | [x] |
+| M4-008 | Add rate limiting per provider | S | P1 | M4-005 | [x] |
+| M4-009 | Add allow/deny list filtering for domains | M | P1 | M4-007 | [x] |
+| M4-010 | Store API key in user-secrets (`Ingest:Search:Brave:ApiKey`) | XS | P0 | M4-005 | [x] |
+| M4-011 | Write Brave search unit tests | M | P1 | M4-005 | [x] |
 
 ### Google Custom Search Implementation
 
 | ID | Task | Size | Priority | Deps | Status |
 |----|------|------|----------|------|--------|
-| M4-012 | Create `GoogleSearchOptions` with ApiKey, SearchEngineId (cx), Language, Country, MaxResults | S | P0 | - | [ ] |
-| M4-013 | Implement `GoogleCustomSearchProvider : ISearchProvider` | L | P0 | M4-003, M4-012 | [ ] |
-| M4-014 | Call Google Custom Search JSON API and parse response | M | P0 | M4-013 | [ ] |
-| M4-015 | Map Google results to `SearchCandidate` | S | P0 | M4-014 | [ ] |
-| M4-016 | Support site-restricted mode for recipe-domain allowlists | M | P2 | M4-013 | [ ] |
-| M4-017 | Store API key and cx in user-secrets (`Ingest:Search:Google:ApiKey`, `Ingest:Search:Google:SearchEngineId`) | XS | P0 | M4-013 | [ ] |
-| M4-018 | Write Google Custom Search unit tests | M | P1 | M4-013 | [ ] |
+| M4-012 | Create `GoogleSearchOptions` with ApiKey, SearchEngineId (cx), Language, Country, MaxResults | S | P0 | - | [x] |
+| M4-013 | Implement `GoogleCustomSearchProvider : ISearchProvider` | L | P0 | M4-003, M4-012 | [x] |
+| M4-014 | Call Google Custom Search JSON API and parse response | M | P0 | M4-013 | [x] |
+| M4-015 | Map Google results to `SearchCandidate` | S | P0 | M4-014 | [x] |
+| M4-016 | Support site-restricted mode for recipe-domain allowlists | M | P2 | M4-013 | [x] |
+| M4-017 | Store API key and cx in user-secrets (`Ingest:Search:Google:ApiKey`, `Ingest:Search:Google:SearchEngineId`) | XS | P0 | M4-013 | [x] |
+| M4-018 | Write Google Custom Search unit tests | M | P1 | M4-013 | [x] |
 
 ### Search Provider Resolver
 
 | ID | Task | Size | Priority | Deps | Status |
 |----|------|------|----------|------|--------|
-| M4-019 | Create `SearchProviderDescriptor` record with Id, DisplayName, Enabled, IsDefault, Capabilities | S | P0 | - | [ ] |
-| M4-020 | Create `ISearchProviderResolver` interface with Resolve(providerId) and ListEnabled() | S | P0 | M4-019 | [ ] |
-| M4-021 | Implement `SearchProviderResolver` with DI-based provider registration | M | P0 | M4-020, M4-005, M4-013 | [ ] |
-| M4-022 | Throw structured error for disabled/unknown provider | S | P0 | M4-021 | [ ] |
-| M4-023 | Add search provider configuration to `appsettings.json` | S | P0 | M4-021 | [ ] |
-| M4-024 | Write resolver unit tests | M | P1 | M4-021 | [ ] |
+| M4-019 | Create `SearchProviderDescriptor` record with Id, DisplayName, Enabled, IsDefault, Capabilities | S | P0 | - | [x] |
+| M4-020 | Create `ISearchProviderResolver` interface with Resolve(providerId) and ListEnabled() | S | P0 | M4-019 | [x] |
+| M4-021 | Implement `SearchProviderResolver` with DI-based provider registration | M | P0 | M4-020, M4-005, M4-013 | [x] |
+| M4-022 | Throw structured error for disabled/unknown provider | S | P0 | M4-021 | [x] |
+| M4-023 | Add search provider configuration to `appsettings.json` | S | P0 | M4-021 | [x] |
+| M4-024 | Write resolver unit tests | M | P1 | M4-021 | [x] |
 
 ### Gateway: Provider Registry Endpoint
 
 | ID | Task | Size | Priority | Deps | Status |
 |----|------|------|----------|------|--------|
-| M4-025 | Implement `GET /api/ingest/providers/search` endpoint | M | P0 | M4-021 | [ ] |
-| M4-026 | Return defaultProviderId and providers array | S | P0 | M4-025 | [ ] |
-| M4-027 | Include capabilities in provider descriptors | S | P1 | M4-025 | [ ] |
-| M4-028 | Write provider registry endpoint tests | M | P1 | M4-025 | [ ] |
+| M4-025 | Implement `GET /api/ingest/providers/search` endpoint | M | P0 | M4-021 | [x] |
+| M4-026 | Return defaultProviderId and providers array | S | P0 | M4-025 | [x] |
+| M4-027 | Include capabilities in provider descriptors | S | P1 | M4-025 | [x] |
+| M4-028 | Write provider registry endpoint tests | M | P1 | M4-025 | [x] |
 
 ### Gateway: Task Payload Updates
 
 | ID | Task | Size | Priority | Deps | Status |
 |----|------|------|----------|------|--------|
-| M4-029 | Extend `IngestPayload` for mode Query with `search.providerId` | S | P0 | M1-001 | [ ] |
-| M4-030 | Default to `defaultProviderId` if `search.providerId` omitted | S | P0 | M4-029, M4-021 | [ ] |
-| M4-031 | Return `400 INVALID_SEARCH_PROVIDER` for unknown/disabled provider | S | P0 | M4-030 | [ ] |
-| M4-032 | Store selected providerId in task metadata | S | P0 | M4-029 | [ ] |
-| M4-033 | Test: query task creation with provider selection | M | P1 | M4-029 | [ ] |
+| M4-029 | Extend `IngestPayload` for mode Query with `search.providerId` | S | P0 | M1-001 | [x] |
+| M4-030 | Default to `defaultProviderId` if `search.providerId` omitted | S | P0 | M4-029, M4-021 | [x] |
+| M4-031 | Return `400 INVALID_SEARCH_PROVIDER` for unknown/disabled provider | S | P0 | M4-030 | [x] |
+| M4-032 | Store selected providerId in task metadata | S | P0 | M4-029 | [x] |
+| M4-033 | Test: query task creation with provider selection | M | P1 | M4-029 | [x] |
 
 ### Discover Phase
 
 | ID | Task | Size | Priority | Deps | Status |
 |----|------|------|----------|------|--------|
-| M4-034 | Implement Discover phase in IngestPhaseRunner | L | P0 | M1-009, M4-021 | [ ] |
-| M4-035 | Parse query and providerId from payload | S | P0 | M4-034 | [ ] |
-| M4-036 | Resolve and call selected search provider | M | P0 | M4-034, M4-021 | [ ] |
-| M4-037 | Store `candidates.normalized.json` artifact | S | P0 | M4-036 | [ ] |
-| M4-038 | Store `candidates.raw.json` artifact (debug) | S | P1 | M4-036 | [ ] |
-| M4-039 | Auto-select top candidate | S | P0 | M4-036 | [ ] |
-| M4-040 | Store selectedCandidateIndex in task state | S | P0 | M4-039 | [ ] |
-| M4-041 | Update progress weights for Discover phase | S | P1 | M4-034 | [ ] |
+| M4-034 | Implement Discover phase in IngestPhaseRunner | L | P0 | M1-009, M4-021 | [x] |
+| M4-035 | Parse query and providerId from payload | S | P0 | M4-034 | [x] |
+| M4-036 | Resolve and call selected search provider | M | P0 | M4-034, M4-021 | [x] |
+| M4-037 | Store `candidates.normalized.json` artifact | S | P0 | M4-036 | [x] |
+| M4-038 | Store `candidates.raw.json` artifact (debug) | S | P1 | M4-036 | [x] |
+| M4-039 | Auto-select top candidate | S | P0 | M4-036 | [x] |
+| M4-040 | Store selectedCandidateIndex in task state | S | P0 | M4-039 | [x] |
+| M4-041 | Update progress weights for Discover phase | S | P1 | M4-034 | [x] |
 
 ### Fallback Policy
 
 | ID | Task | Size | Priority | Deps | Status |
 |----|------|------|----------|------|--------|
-| M4-042 | Add `Ingest:Search:AllowFallback` configuration option | S | P1 | M4-023 | [ ] |
-| M4-043 | Implement optional fallback to default provider on 429/quota/transient errors | M | P1 | M4-042, M4-036 | [ ] |
-| M4-044 | Record fallback in TaskState.Metadata | S | P1 | M4-043 | [ ] |
-| M4-045 | Store `discover.fallback.json` artifact on fallback | S | P1 | M4-043 | [ ] |
-| M4-046 | Test: fallback behavior | M | P1 | M4-043 | [ ] |
+| M4-042 | Add `Ingest:Search:AllowFallback` configuration option | S | P1 | M4-023 | [x] |
+| M4-043 | Implement optional fallback to default provider on 429/quota/transient errors | M | P1 | M4-042, M4-036 | [x] |
+| M4-044 | Record fallback in TaskState.Metadata | S | P1 | M4-043 | [x] |
+| M4-045 | Store `discover.fallback.json` artifact on fallback | S | P1 | M4-043 | [x] |
+| M4-046 | Test: fallback behavior | M | P1 | M4-043 | [x] |
 
 ### UI: Search Provider Selector
 
 | ID | Task | Size | Priority | Deps | Status |
 |----|------|------|----------|------|--------|
-| M4-047 | Add URL/Query mode toggle to IngestWizard | S | P0 | M1-071 | [ ] |
-| M4-048 | Create query input form | M | P0 | M4-047 | [ ] |
-| M4-049 | Create `ProviderSelector.razor` component (reusable foundation) | M | P0 | M4-025 | [ ] |
-| M4-050 | Fetch providers from `GET /api/ingest/providers/search` | S | P0 | M4-049 | [ ] |
-| M4-051 | Display provider dropdown with capabilities | S | P0 | M4-050 | [ ] |
-| M4-052 | Apply default selection from defaultProviderId | S | P0 | M4-050 | [ ] |
-| M4-053 | Include selected providerId in task creation payload | S | P0 | M4-049, M4-029 | [ ] |
-| M4-054 | Create `CandidateList.razor` component | M | P1 | M4-037 | [ ] |
-| M4-055 | Display candidates after discovery | M | P1 | M4-054 | [ ] |
-| M4-056 | Add "Try different candidate" action | M | P2 | M4-055 | [ ] |
+| M4-047 | Add URL/Query mode toggle to IngestWizard | S | P0 | M1-071 | [x] |
+| M4-048 | Create query input form | M | P0 | M4-047 | [x] |
+| M4-049 | Create `ProviderSelector.razor` component (reusable foundation) | M | P0 | M4-025 | [x] |
+| M4-050 | Fetch providers from `GET /api/ingest/providers/search` | S | P0 | M4-049 | [x] |
+| M4-051 | Display provider dropdown with capabilities | S | P0 | M4-050 | [x] |
+| M4-052 | Apply default selection from defaultProviderId | S | P0 | M4-050 | [x] |
+| M4-053 | Include selected providerId in task creation payload | S | P0 | M4-049, M4-029 | [x] |
+| M4-054 | Create `CandidateList.razor` component | M | P1 | M4-037 | [x] |
+| M4-055 | Display candidates after discovery | M | P1 | M4-054 | [x] |
+| M4-056 | Add "Try different candidate" action | M | P2 | M4-055 | [x] |
 
 ### E2E Tests
 
 | ID | Task | Size | Priority | Deps | Status |
 |----|------|------|----------|------|--------|
-| M4-057 | E2E test: Query with Brave ? Discover ? ReviewReady | L | P0 | M4-034 | [ ] |
-| M4-058 | E2E test: Query with Google CSE ? Discover ? ReviewReady | L | P0 | M4-057 | [ ] |
-| M4-059 | E2E test: Invalid provider ? 400 INVALID_SEARCH_PROVIDER | M | P0 | M4-031 | [ ] |
-| M4-060 | E2E test: Provider fallback on 429 | M | P1 | M4-043 | [ ] |
+| M4-057 | E2E test: Query with Brave ? Discover ? ReviewReady | L | P0 | M4-034 | [x] |
+| M4-058 | E2E test: Query with Google CSE ? Discover ? ReviewReady | L | P0 | M4-057 | [x] |
+| M4-059 | E2E test: Invalid provider ? 400 INVALID_SEARCH_PROVIDER | M | P0 | M4-031 | [x] |
+| M4-060 | E2E test: Provider fallback on 429 | M | P1 | M4-043 | [x] |
 
 ---
 

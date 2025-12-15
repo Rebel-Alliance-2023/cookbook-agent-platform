@@ -432,4 +432,189 @@ public class IngestTaskEndpointTests
     }
 
     #endregion
+
+    #region Query Mode - Search Provider Selection Tests
+
+    [Fact]
+    public void QueryMode_WithProviderId_StoresInSearchSettings()
+    {
+        // Arrange
+        var payload = new IngestPayload
+        {
+            Mode = IngestMode.Query,
+            Query = "best ramen recipe",
+            Search = new SearchSettings
+            {
+                ProviderId = "brave",
+                MaxResults = 5,
+                Market = "en-US",
+                SafeSearch = "moderate"
+            }
+        };
+
+        // Assert
+        Assert.NotNull(payload.Search);
+        Assert.Equal("brave", payload.Search.ProviderId);
+        Assert.Equal(5, payload.Search.MaxResults);
+        Assert.Equal("en-US", payload.Search.Market);
+        Assert.Equal("moderate", payload.Search.SafeSearch);
+    }
+
+    [Fact]
+    public void QueryMode_WithoutProviderId_SearchSettingsCanBeNull()
+    {
+        // Arrange - Provider defaults to system default when not specified
+        var payload = new IngestPayload
+        {
+            Mode = IngestMode.Query,
+            Query = "best ramen recipe",
+            Search = null
+        };
+
+        // Assert
+        Assert.Null(payload.Search);
+    }
+
+    [Fact]
+    public void QueryMode_WithEmptyProviderId_IsValid()
+    {
+        // Arrange - Empty provider ID means use default
+        var payload = new IngestPayload
+        {
+            Mode = IngestMode.Query,
+            Query = "best ramen recipe",
+            Search = new SearchSettings
+            {
+                ProviderId = null
+            }
+        };
+
+        // Assert
+        Assert.NotNull(payload.Search);
+        Assert.Null(payload.Search.ProviderId);
+    }
+
+    [Theory]
+    [InlineData("brave")]
+    [InlineData("google")]
+    [InlineData("BRAVE")]
+    [InlineData("Google")]
+    public void QueryMode_WithValidProviderIds(string providerId)
+    {
+        // Arrange
+        var payload = new IngestPayload
+        {
+            Mode = IngestMode.Query,
+            Query = "test query",
+            Search = new SearchSettings
+            {
+                ProviderId = providerId
+            }
+        };
+
+        // Assert
+        Assert.Equal(providerId, payload.Search!.ProviderId);
+    }
+
+    [Fact]
+    public void SearchSettings_Serializes_WithCorrectPropertyNames()
+    {
+        // Arrange
+        var payload = new IngestPayload
+        {
+            Mode = IngestMode.Query,
+            Query = "test",
+            Search = new SearchSettings
+            {
+                ProviderId = "brave",
+                MaxResults = 10,
+                Market = "en-US",
+                SafeSearch = "moderate"
+            }
+        };
+
+        // Act
+        var json = JsonSerializer.Serialize(payload, JsonOptions);
+
+        // Assert
+        Assert.Contains("\"search\":", json);
+        Assert.Contains("\"providerId\":\"brave\"", json);
+        Assert.Contains("\"maxResults\":10", json);
+        Assert.Contains("\"market\":\"en-US\"", json);
+        Assert.Contains("\"safeSearch\":\"moderate\"", json);
+    }
+
+    [Fact]
+    public void Metadata_QueryMode_WithProvider_ContainsProviderId()
+    {
+        // Arrange
+        var payload = new IngestPayload
+        {
+            Mode = IngestMode.Query,
+            Query = "test query",
+            Search = new SearchSettings
+            {
+                ProviderId = "brave"
+            }
+        };
+
+        var metadata = BuildTestMetadataWithProvider(payload, "brave");
+
+        // Assert
+        Assert.Contains("searchProviderId", metadata.Keys);
+        Assert.Equal("brave", metadata["searchProviderId"]);
+    }
+
+    [Fact]
+    public void Metadata_QueryMode_WithDefaultProvider_ContainsResolvedProviderId()
+    {
+        // Arrange - When no provider specified, default is used
+        var payload = new IngestPayload
+        {
+            Mode = IngestMode.Query,
+            Query = "test query"
+        };
+
+        // Simulate default provider resolution
+        var resolvedProviderId = "brave"; // Default provider
+        var metadata = BuildTestMetadataWithProvider(payload, resolvedProviderId);
+
+        // Assert
+        Assert.Contains("searchProviderId", metadata.Keys);
+        Assert.Equal("brave", metadata["searchProviderId"]);
+    }
+
+    private static Dictionary<string, string> BuildTestMetadataWithProvider(IngestPayload payload, string? resolvedProviderId)
+    {
+        var metadata = new Dictionary<string, string>
+        {
+            ["ingestMode"] = payload.Mode.ToString()
+        };
+
+        if (!string.IsNullOrWhiteSpace(payload.Url))
+            metadata["sourceUrl"] = payload.Url;
+            
+        if (!string.IsNullOrWhiteSpace(payload.Query))
+            metadata["searchQuery"] = payload.Query;
+            
+        if (!string.IsNullOrWhiteSpace(payload.RecipeId))
+            metadata["recipeId"] = payload.RecipeId;
+
+        // Store resolved provider ID
+        if (!string.IsNullOrWhiteSpace(resolvedProviderId))
+            metadata["searchProviderId"] = resolvedProviderId;
+
+        if (payload.PromptSelection?.ExtractPromptId is not null)
+            metadata["promptId:extract"] = payload.PromptSelection.ExtractPromptId;
+            
+        if (payload.PromptSelection?.NormalizePromptId is not null)
+            metadata["promptId:normalize"] = payload.PromptSelection.NormalizePromptId;
+            
+        if (payload.PromptSelection?.DiscoverPromptId is not null)
+            metadata["promptId:discover"] = payload.PromptSelection.DiscoverPromptId;
+
+        return metadata;
+    }
+
+    #endregion
 }

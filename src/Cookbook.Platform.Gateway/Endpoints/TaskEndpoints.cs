@@ -1,5 +1,6 @@
 using System.Text.Json;
 using Cookbook.Platform.Gateway.Services;
+using Cookbook.Platform.Orchestrator.Services.Ingest.Search;
 using Cookbook.Platform.Shared.Agents;
 using Cookbook.Platform.Shared.Messaging;
 using Cookbook.Platform.Shared.Models.Ingest;
@@ -59,6 +60,7 @@ public static class TaskEndpoints
         CreateIngestTaskRequest request,
         IMessagingBus messagingBus,
         TaskRepository taskRepository,
+        ISearchProviderResolver searchProviderResolver,
         CancellationToken cancellationToken)
     {
         // Validate agent type is Ingest
@@ -79,13 +81,40 @@ public static class TaskEndpoints
             return validationResult;
         }
 
+        // Validate and resolve search provider for Query mode
+        string? resolvedProviderId = null;
+        if (request.Payload.Mode == IngestMode.Query)
+        {
+            var providerValidation = ValidateAndResolveSearchProvider(
+                request.Payload.Search?.ProviderId, 
+                searchProviderResolver);
+            
+            if (providerValidation.Error is not null)
+            {
+                return providerValidation.Error;
+            }
+            
+            resolvedProviderId = providerValidation.ProviderId;
+        }
+
         // Generate ThreadId if not provided
         var threadId = string.IsNullOrWhiteSpace(request.ThreadId) 
             ? Guid.NewGuid().ToString() 
             : request.ThreadId;
 
+        // Build final payload with resolved provider if needed
+        var finalPayload = resolvedProviderId is not null 
+            ? request.Payload with 
+            { 
+                Search = (request.Payload.Search ?? new SearchSettings()) with 
+                { 
+                    ProviderId = resolvedProviderId 
+                } 
+            }
+            : request.Payload;
+
         // Serialize the ingest payload
-        var payload = JsonSerializer.Serialize(request.Payload, new JsonSerializerOptions
+        var payload = JsonSerializer.Serialize(finalPayload, new JsonSerializerOptions
         {
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
             WriteIndented = false
@@ -98,7 +127,7 @@ public static class TaskEndpoints
             AgentType = KnownAgentTypes.Ingest,
             Payload = payload,
             CreatedAt = DateTime.UtcNow,
-            Metadata = BuildIngestMetadata(request.Payload)
+            Metadata = BuildIngestMetadata(finalPayload, resolvedProviderId)
         };
 
         // Persist task to Cosmos
@@ -177,7 +206,7 @@ public static class TaskEndpoints
     /// <summary>
     /// Builds metadata dictionary from ingest payload for audit purposes.
     /// </summary>
-    private static Dictionary<string, string> BuildIngestMetadata(IngestPayload payload)
+    private static Dictionary<string, string> BuildIngestMetadata(IngestPayload payload, string? resolvedProviderId = null)
     {
         var metadata = new Dictionary<string, string>
         {
@@ -192,6 +221,10 @@ public static class TaskEndpoints
             
         if (!string.IsNullOrWhiteSpace(payload.RecipeId))
             metadata["recipeId"] = payload.RecipeId;
+
+        // Record resolved search provider for query mode
+        if (!string.IsNullOrWhiteSpace(resolvedProviderId))
+            metadata["searchProviderId"] = resolvedProviderId;
 
         // Record prompt selections for audit
         if (payload.PromptSelection?.ExtractPromptId is not null)
@@ -332,5 +365,50 @@ public static class TaskEndpoints
                 statusCode: result.StatusCode,
                 detail: result.Error?.Message ?? "An error occurred")
         };
+    }
+
+    /// <summary>
+    /// Validates and resolves the search provider for query mode.
+    /// Returns the resolved provider ID (defaulting if not specified).
+    /// </summary>
+    private static (string? ProviderId, IResult? Error) ValidateAndResolveSearchProvider(
+        string? requestedProviderId,
+        ISearchProviderResolver resolver)
+    {
+        // Default to the default provider if not specified
+        var providerId = string.IsNullOrWhiteSpace(requestedProviderId) 
+            ? resolver.DefaultProviderId 
+            : requestedProviderId;
+
+        // Try to resolve the provider
+        if (!resolver.TryResolve(providerId, out _))
+        {
+            // Check if it's unknown or disabled
+            var descriptor = resolver.GetDescriptor(providerId);
+            
+            if (descriptor is null)
+            {
+                return (null, Results.BadRequest(new
+                {
+                    code = "INVALID_SEARCH_PROVIDER",
+                    message = $"Search provider '{providerId}' is not registered.",
+                    providerId = providerId,
+                    availableProviders = resolver.ListEnabled().Select(p => p.Id).ToList()
+                }));
+            }
+            
+            if (!descriptor.Enabled)
+            {
+                return (null, Results.BadRequest(new
+                {
+                    code = "INVALID_SEARCH_PROVIDER",
+                    message = $"Search provider '{providerId}' is disabled.",
+                    providerId = providerId,
+                    availableProviders = resolver.ListEnabled().Select(p => p.Id).ToList()
+                }));
+            }
+        }
+
+        return (providerId, null);
     }
 }

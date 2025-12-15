@@ -1,0 +1,256 @@
+@using global::Cookbook.Platform.Shared.Models.Ingest.Search
+
+<div class="candidate-list">
+    <div class="candidate-list-header">
+        <h4>Search Results</h4>
+        @if (Candidates != null)
+        {
+            <span class="candidate-count">@Candidates.Count results</span>
+        }
+    </div>
+    
+    @if (Candidates == null || Candidates.Count == 0)
+    {
+        <div class="candidate-empty">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8"/>
+                <path d="m21 21-4.3-4.3"/>
+            </svg>
+            <p>No candidates found</p>
+        </div>
+    }
+    else
+    {
+        <div class="candidate-items">
+            @for (int i = 0; i < Candidates.Count; i++)
+            {
+                var candidate = Candidates[i];
+                var index = i;
+                <div class="candidate-item @(SelectedIndex == index ? "selected" : "")"
+                     @onclick="() => SelectCandidate(index)">
+                    <div class="candidate-rank">@(index + 1)</div>
+                    <div class="candidate-content">
+                        <div class="candidate-title">@candidate.Title</div>
+                        @if (!string.IsNullOrEmpty(candidate.SiteName))
+                        {
+                            <div class="candidate-site">@candidate.SiteName</div>
+                        }
+                        @if (!string.IsNullOrEmpty(candidate.Snippet))
+                        {
+                            <div class="candidate-snippet">@candidate.Snippet</div>
+                        }
+                        <div class="candidate-url">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+                                <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+                            </svg>
+                            <a href="@candidate.Url" target="_blank" rel="noopener noreferrer" @onclick:stopPropagation>
+                                @TruncateUrl(candidate.Url)
+                            </a>
+                        </div>
+                    </div>
+                    @if (SelectedIndex == index)
+                    {
+                        <div class="candidate-selected-badge">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="20 6 9 17 4 12"/>
+                            </svg>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+    }
+</div>
+
+<style>
+    .candidate-list {
+        border: 1px solid var(--qg-border, #e5e7eb);
+        border-radius: 0.5rem;
+        overflow: hidden;
+    }
+    
+    .candidate-list-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.75rem 1rem;
+        background-color: var(--qg-bg-secondary, #f9fafb);
+        border-bottom: 1px solid var(--qg-border, #e5e7eb);
+    }
+    
+    .candidate-list-header h4 {
+        margin: 0;
+        font-size: 0.875rem;
+        font-weight: 600;
+    }
+    
+    .candidate-count {
+        font-size: 0.75rem;
+        color: var(--qg-text-secondary, #6b7280);
+    }
+    
+    .candidate-empty {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem;
+        color: var(--qg-text-secondary, #6b7280);
+        gap: 0.5rem;
+    }
+    
+    .candidate-empty p {
+        margin: 0;
+        font-size: 0.875rem;
+    }
+    
+    .candidate-items {
+        max-height: 400px;
+        overflow-y: auto;
+    }
+    
+    .candidate-item {
+        display: flex;
+        gap: 0.75rem;
+        padding: 0.75rem 1rem;
+        border-bottom: 1px solid var(--qg-border, #e5e7eb);
+        cursor: pointer;
+        transition: background-color 0.15s ease;
+    }
+    
+    .candidate-item:last-child {
+        border-bottom: none;
+    }
+    
+    .candidate-item:hover {
+        background-color: var(--qg-bg-secondary, #f9fafb);
+    }
+    
+    .candidate-item.selected {
+        background-color: rgba(59, 130, 246, 0.05);
+        border-left: 3px solid var(--qg-primary, #3b82f6);
+    }
+    
+    .candidate-rank {
+        width: 1.5rem;
+        height: 1.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: var(--qg-bg-secondary, #f3f4f6);
+        border-radius: 50%;
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: var(--qg-text-secondary, #6b7280);
+        flex-shrink: 0;
+    }
+    
+    .candidate-item.selected .candidate-rank {
+        background-color: var(--qg-primary, #3b82f6);
+        color: white;
+    }
+    
+    .candidate-content {
+        flex: 1;
+        min-width: 0;
+    }
+    
+    .candidate-title {
+        font-weight: 500;
+        font-size: 0.875rem;
+        color: var(--qg-text-primary, #111827);
+        margin-bottom: 0.25rem;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    
+    .candidate-site {
+        font-size: 0.75rem;
+        color: var(--qg-primary, #3b82f6);
+        margin-bottom: 0.25rem;
+    }
+    
+    .candidate-snippet {
+        font-size: 0.8125rem;
+        color: var(--qg-text-secondary, #6b7280);
+        line-height: 1.4;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        margin-bottom: 0.25rem;
+    }
+    
+    .candidate-url {
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+        font-size: 0.75rem;
+        color: var(--qg-text-tertiary, #9ca3af);
+    }
+    
+    .candidate-url a {
+        color: inherit;
+        text-decoration: none;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    
+    .candidate-url a:hover {
+        color: var(--qg-primary, #3b82f6);
+        text-decoration: underline;
+    }
+    
+    .candidate-selected-badge {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 1.5rem;
+        height: 1.5rem;
+        background-color: var(--qg-primary, #3b82f6);
+        border-radius: 50%;
+        color: white;
+        flex-shrink: 0;
+        align-self: center;
+    }
+</style>
+
+@code {
+    [Parameter]
+    public List<SearchCandidate>? Candidates { get; set; }
+    
+    [Parameter]
+    public int SelectedIndex { get; set; }
+    
+    [Parameter]
+    public EventCallback<int> SelectedIndexChanged { get; set; }
+    
+    [Parameter]
+    public EventCallback<int> OnCandidateSelected { get; set; }
+
+    private async Task SelectCandidate(int index)
+    {
+        SelectedIndex = index;
+        await SelectedIndexChanged.InvokeAsync(index);
+        await OnCandidateSelected.InvokeAsync(index);
+    }
+
+    private string TruncateUrl(string url)
+    {
+        if (string.IsNullOrEmpty(url)) return "";
+        
+        // Remove protocol
+        var display = url.Replace("https://", "").Replace("http://", "");
+        
+        // Truncate if too long
+        if (display.Length > 50)
+        {
+            return display.Substring(0, 47) + "...";
+        }
+        
+        return display;
+    }
+}

@@ -1,3 +1,4 @@
+using Cookbook.Platform.Gateway;
 using Cookbook.Platform.Gateway.Endpoints;
 using Cookbook.Platform.Gateway.Services;
 using Cookbook.Platform.Infrastructure;
@@ -27,6 +28,9 @@ builder.Services.AddMessagingBus(builder.Configuration);
 // Add storage services
 builder.Services.AddCosmosRepositories(builder.Configuration);
 builder.Services.AddBlobStorage(builder.Configuration);
+
+// Add search providers
+builder.Services.AddSearchProviders(builder.Configuration);
 
 // Add Gateway services
 builder.Services.AddScoped<IRecipeImportService, RecipeImportService>();
@@ -70,6 +74,7 @@ app.MapTaskEndpoints();
 app.MapRecipeEndpoints();
 app.MapArtifactEndpoints();
 app.MapPromptEndpoints();
+app.MapIngestEndpoints();
 
 app.Run();
 

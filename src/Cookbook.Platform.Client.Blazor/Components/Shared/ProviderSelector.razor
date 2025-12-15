@@ -1,0 +1,229 @@
+@using global::Cookbook.Platform.Shared.Models.Ingest.Search
+@inject ApiClientService ApiClient
+@inject ILogger<ProviderSelector> Logger
+
+<div class="provider-selector">
+    <label class="qg-label">Search Provider</label>
+    
+    @if (isLoading)
+    {
+        <div class="provider-loading">
+            <span class="loading-spinner-small"></span>
+            <span>Loading providers...</span>
+        </div>
+    }
+    else if (loadError != null)
+    {
+        <div class="provider-error">
+            <span>@loadError</span>
+            <button type="button" class="qg-btn qg-btn-sm qg-btn-secondary" @onclick="LoadProviders">
+                Retry
+            </button>
+        </div>
+    }
+    else if (providers != null && providers.Count > 0)
+    {
+        <select class="qg-select" 
+                value="@SelectedProviderId"
+                @onchange="OnProviderChanged"
+                disabled="@Disabled">
+            @foreach (var provider in providers)
+            {
+                <option value="@provider.Id">
+                    @provider.DisplayName
+                    @if (provider.IsDefault)
+                    {
+                        @(" (Default)")
+                    }
+                </option>
+            }
+        </select>
+        
+        @if (selectedProvider != null)
+        {
+            <div class="provider-capabilities">
+                @if (selectedProvider.Capabilities.SupportsMarket)
+                {
+                    <span class="capability-badge">Market Filter</span>
+                }
+                @if (selectedProvider.Capabilities.SupportsSafeSearch)
+                {
+                    <span class="capability-badge">Safe Search</span>
+                }
+                @if (selectedProvider.Capabilities.SupportsSiteRestrictions)
+                {
+                    <span class="capability-badge">Site Restrictions</span>
+                }
+                <span class="capability-badge">Max @(selectedProvider.Capabilities.MaxResultsPerRequest) results</span>
+            </div>
+        }
+    }
+    else
+    {
+        <div class="provider-empty">No search providers available</div>
+    }
+</div>
+
+<style>
+    .provider-selector {
+        margin-bottom: 1rem;
+    }
+    
+    .provider-loading {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: var(--qg-text-secondary, #6b7280);
+        font-size: 0.875rem;
+        padding: 0.5rem 0;
+    }
+    
+    .loading-spinner-small {
+        display: inline-block;
+        width: 14px;
+        height: 14px;
+        border: 2px solid currentColor;
+        border-right-color: transparent;
+        border-radius: 50%;
+        animation: spin 0.75s linear infinite;
+    }
+    
+    @@keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+    
+    .provider-error {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.5rem;
+        background-color: rgba(239, 68, 68, 0.1);
+        border-radius: 0.375rem;
+        padding: 0.5rem 0.75rem;
+        color: var(--qg-error, #ef4444);
+        font-size: 0.875rem;
+    }
+    
+    .provider-empty {
+        color: var(--qg-text-secondary, #6b7280);
+        font-size: 0.875rem;
+        padding: 0.5rem 0;
+    }
+    
+    .qg-select {
+        width: 100%;
+        padding: 0.625rem 0.75rem;
+        font-size: 0.875rem;
+        border: 1px solid var(--qg-border, #e5e7eb);
+        border-radius: 0.375rem;
+        background-color: white;
+        cursor: pointer;
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236b7280' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 0.75rem center;
+        padding-right: 2rem;
+    }
+    
+    .qg-select:focus {
+        outline: none;
+        border-color: var(--qg-primary, #3b82f6);
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+    
+    .qg-select:disabled {
+        background-color: var(--qg-bg-secondary, #f3f4f6);
+        cursor: not-allowed;
+        opacity: 0.7;
+    }
+    
+    .provider-capabilities {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.375rem;
+        margin-top: 0.5rem;
+    }
+    
+    .capability-badge {
+        display: inline-block;
+        padding: 0.125rem 0.5rem;
+        font-size: 0.75rem;
+        background-color: var(--qg-bg-secondary, #f3f4f6);
+        color: var(--qg-text-secondary, #6b7280);
+        border-radius: 9999px;
+    }
+    
+    .qg-btn-sm {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.75rem;
+    }
+</style>
+
+@code {
+    [Parameter]
+    public string? SelectedProviderId { get; set; }
+    
+    [Parameter]
+    public EventCallback<string?> SelectedProviderIdChanged { get; set; }
+    
+    [Parameter]
+    public bool Disabled { get; set; }
+    
+    [Parameter]
+    public EventCallback<List<SearchProviderDescriptor>> OnProvidersLoaded { get; set; }
+
+    private List<SearchProviderDescriptor>? providers;
+    private SearchProviderDescriptor? selectedProvider;
+    private bool isLoading = true;
+    private string? loadError;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadProviders();
+    }
+
+    private async Task LoadProviders()
+    {
+        isLoading = true;
+        loadError = null;
+
+        try
+        {
+            var response = await ApiClient.GetSearchProvidersAsync();
+            providers = response.Providers.ToList();
+
+            // Set default provider if none selected
+            if (string.IsNullOrEmpty(SelectedProviderId) && !string.IsNullOrEmpty(response.DefaultProviderId))
+            {
+                SelectedProviderId = response.DefaultProviderId;
+                await SelectedProviderIdChanged.InvokeAsync(SelectedProviderId);
+            }
+
+            // Find selected provider for capabilities display
+            selectedProvider = providers.FirstOrDefault(p => p.Id == SelectedProviderId);
+
+            // Notify parent of loaded providers
+            await OnProvidersLoaded.InvokeAsync(providers);
+
+            Logger.LogInformation("Loaded {Count} search providers, default: {DefaultId}", 
+                providers.Count, response.DefaultProviderId);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to load search providers");
+            loadError = "Failed to load providers";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task OnProviderChanged(ChangeEventArgs e)
+    {
+        var newValue = e.Value?.ToString();
+        SelectedProviderId = newValue;
+        selectedProvider = providers?.FirstOrDefault(p => p.Id == newValue);
+        await SelectedProviderIdChanged.InvokeAsync(newValue);
+    }
+}

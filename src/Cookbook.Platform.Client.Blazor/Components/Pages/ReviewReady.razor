@@ -1,7 +1,9 @@
 @page "/ingest/review/{TaskId}"
+@using System.Text.Json
 @using Microsoft.AspNetCore.Components
 @using global::Cookbook.Platform.Shared.Models
 @using global::Cookbook.Platform.Shared.Models.Ingest
+@using global::Cookbook.Platform.Shared.Models.Ingest.Search
 @inject ApiClientService ApiClient
 @inject NavigationManager Navigation
 @inject ILogger<ReviewReady> Logger
@@ -157,6 +159,34 @@ else if (draft != null)
 
         <!-- Validation & Actions -->
         <div class="sidebar">
+            <!-- Discovery Candidates (if available) -->
+            @if (searchCandidates != null && searchCandidates.Count > 0)
+            {
+                <div class="qg-card candidates-card qg-mb-16">
+                    <div class="qg-section-header">
+                        <h3 class="qg-section-title">Discovery Results</h3>
+                    </div>
+                    <CandidateList Candidates="@searchCandidates" 
+                                   SelectedIndex="@selectedCandidateIndex" />
+                    
+                    @if (searchCandidates.Count > 1 && !isTerminalState)
+                    {
+                        <div class="try-different-section">
+                            <p class="try-different-hint">
+                                Not the right recipe? You can start a new search with different terms.
+                            </p>
+                            <button class="qg-btn qg-btn-outline qg-btn-sm" @onclick="TryDifferentCandidate">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <circle cx="11" cy="11" r="8"/>
+                                    <path d="m21 21-4.3-4.3"/>
+                                </svg>
+                                <span>Search Again</span>
+                            </button>
+                        </div>
+                    }
+                </div>
+            }
+            
             <!-- Validation Report -->
             <div class="qg-card validation-card">
                 <div class="qg-section-header">
@@ -611,6 +641,33 @@ else if (draft != null)
         top: 1rem;
     }
     
+    .candidates-card {
+        padding: 0;
+    }
+    
+    .try-different-section {
+        padding: 0.75rem 1rem;
+        border-top: 1px solid var(--qg-border, #e5e7eb);
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .try-different-hint {
+        margin: 0;
+        font-size: 0.75rem;
+        color: var(--qg-text-secondary, #6b7280);
+    }
+    
+    .qg-btn-sm {
+        padding: 0.375rem 0.75rem;
+        font-size: 0.75rem;
+    }
+    
+    .qg-mb-16 {
+        margin-bottom: 1rem;
+    }
+    
     .validation-success {
         display: flex;
         align-items: center;
@@ -940,6 +997,10 @@ else if (draft != null)
     private string? taskStatus;
     private bool isTerminalState;
     
+    // Search discovery candidates
+    private List<SearchCandidate>? searchCandidates;
+    private int selectedCandidateIndex = 0;
+    
     // Repair tracking
     private bool repairAttempted;
     private bool repairSuccessful;
@@ -954,6 +1015,7 @@ else if (draft != null)
     {
         await LoadDraft();
         await LoadTaskState();
+        await LoadSearchCandidates();
     }
 
     private async Task LoadDraft()
@@ -1010,6 +1072,33 @@ else if (draft != null)
         catch (Exception ex)
         {
             Logger.LogWarning(ex, "Failed to load task state for {TaskId}", TaskId);
+        }
+    }
+
+    private async Task LoadSearchCandidates()
+    {
+        if (string.IsNullOrEmpty(TaskId))
+            return;
+
+        try
+        {
+            // Try to load candidates.normalized.json artifact
+            var candidatesData = await ApiClient.DownloadArtifactAsync(TaskId, "candidates.normalized.json");
+            if (candidatesData != null && candidatesData.Length > 0)
+            {
+                var json = System.Text.Encoding.UTF8.GetString(candidatesData);
+                searchCandidates = JsonSerializer.Deserialize<List<SearchCandidate>>(json, new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                });
+                Logger.LogInformation("Loaded {Count} search candidates for task {TaskId}", 
+                    searchCandidates?.Count ?? 0, TaskId);
+            }
+        }
+        catch (Exception ex)
+        {
+            // It's OK if candidates are not available (URL mode doesn't have them)
+            Logger.LogDebug(ex, "Could not load search candidates for task {TaskId}", TaskId);
         }
     }
 
@@ -1094,6 +1183,12 @@ else if (draft != null)
 
     private void NavigateToIngest()
     {
+        Navigation.NavigateTo("/ingest");
+    }
+
+    private void TryDifferentCandidate()
+    {
+        // Navigate back to ingest page in Query mode
         Navigation.NavigateTo("/ingest");
     }
 

@@ -118,4 +118,110 @@ public static class IngestPromptTemplates
           }
         }
         """;
+
+    /// <summary>
+    /// System prompt for the normalize phase.
+    /// </summary>
+    public const string NormalizeV1SystemPrompt = """
+        You are a recipe standardization assistant. Your task is to analyze a recipe and suggest JSON Patch operations to normalize and improve the recipe data while preserving the original meaning.
+
+        Rules:
+        1. Output ONLY valid JSON matching the specified schema. No markdown, no explanations.
+        2. Suggest improvements in order of risk: low-risk formatting first, then medium-risk data changes, then high-risk content changes.
+        3. Be conservative - prefer fewer high-quality changes over many minor tweaks.
+        4. Always include a clear reason for each patch operation.
+        5. Flag uncertain changes as high risk for human review.
+        6. If no normalizations are needed, return an empty patches array.
+        """;
+
+    /// <summary>
+    /// User prompt template for the normalize phase (Scriban syntax).
+    /// </summary>
+    public const string NormalizeV1UserPromptTemplate = """
+        Analyze the following recipe and suggest JSON Patch operations to normalize and improve it.
+
+        **Current Recipe:**
+        ```json
+        {{ recipe | json }}
+        ```
+
+        **Focus Areas:**
+        {{ if focus_areas }}
+        {{ for area in focus_areas }}
+        - {{ area }}
+        {{ end }}
+        {{ else }}
+        - All applicable normalizations
+        {{ end }}
+
+        **Output Schema:**
+        ```json
+        {
+          "patches": [
+            {
+              "op": "replace|add|remove",
+              "path": "/json/pointer/path",
+              "value": "new value (omit for remove)",
+              "riskCategory": "low|medium|high",
+              "reason": "Explanation for this change"
+            }
+          ],
+          "summary": "Brief summary of all changes",
+          "hasHighRiskChanges": true|false
+        }
+        ```
+
+        **Risk Categories:**
+        - **low**: Safe formatting changes (capitalization, punctuation, unit standardization)
+        - **medium**: Data modifications that preserve meaning (ingredient parsing, metadata inference)
+        - **high**: Content changes affecting cooking (instruction modifications, error corrections)
+
+        **Guidelines:**
+        1. Normalize capitalization (title case for name, sentence case for descriptions)
+        2. Standardize units (e.g., "tbsp" ? "tablespoon", "c" ? "cup")
+        3. Extract preparation notes to separate field (e.g., "onion, diced" ? notes: "diced")
+        4. Infer missing metadata if clearly identifiable (cuisine, dietType)
+        5. Fix obvious parsing errors
+        6. DO NOT change the essential meaning or cooking process
+
+        Output ONLY the JSON object, no additional text or markdown code blocks.
+        """;
+
+    /// <summary>
+    /// The required variables for the normalize prompt.
+    /// </summary>
+    public static readonly string[] NormalizeRequiredVariables = ["recipe"];
+
+    /// <summary>
+    /// The optional variables for the normalize prompt.
+    /// </summary>
+    public static readonly string[] NormalizeOptionalVariables = ["focus_areas"];
+
+    /// <summary>
+    /// The JSON schema for the normalize patch response.
+    /// </summary>
+    public const string NormalizePatchSchema = """
+        {
+          "type": "object",
+          "required": ["patches", "summary", "hasHighRiskChanges"],
+          "properties": {
+            "patches": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["op", "path", "riskCategory", "reason"],
+                "properties": {
+                  "op": { "type": "string", "enum": ["replace", "add", "remove"] },
+                  "path": { "type": "string", "description": "JSON Pointer path" },
+                  "value": { "description": "New value for replace/add operations" },
+                  "riskCategory": { "type": "string", "enum": ["low", "medium", "high"] },
+                  "reason": { "type": "string", "description": "Explanation for change" }
+                }
+              }
+            },
+            "summary": { "type": "string", "description": "Brief summary of all changes" },
+            "hasHighRiskChanges": { "type": "boolean", "description": "Whether any high-risk changes are included" }
+          }
+        }
+        """;
 }

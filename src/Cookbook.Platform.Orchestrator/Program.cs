@@ -60,6 +60,9 @@ builder.Services.AddSingleton<ISimilarityDetector, SimilarityDetector>();
 // Add Repair Paraphrase services
 builder.Services.AddSingleton<IRepairParaphraseService, RepairParaphraseService>();
 
+// Add Normalize services
+builder.Services.AddSingleton<INormalizeService, NormalizeService>();
+
 // Add Artifact Storage services
 builder.Services.AddSingleton<IArtifactStorageService, BlobArtifactStorageService>();
 

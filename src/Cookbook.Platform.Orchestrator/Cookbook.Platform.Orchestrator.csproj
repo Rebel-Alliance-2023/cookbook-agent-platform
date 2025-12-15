@@ -1,11 +1,12 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
 <PropertyGroup>
   <TargetFramework>net10.0</TargetFramework>
   <ImplicitUsings>enable</ImplicitUsings>
   <Nullable>enable</Nullable>
   <RootNamespace>Cookbook.Platform.Orchestrator</RootNamespace>
-</PropertyGroup>
+  <UserSecretsId>f26e1e47-8b73-4655-ac29-19b732bb5a9a</UserSecretsId>
+  </PropertyGroup>
 
 <ItemGroup>
   <PackageReference Include="Aspire.StackExchange.Redis" Version="9.3.0" />

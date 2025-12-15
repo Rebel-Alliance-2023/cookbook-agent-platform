@@ -20,6 +20,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Cookbook.Platform.Gateway\Cookbook.Platform.Gateway.csproj" />
+    <ProjectReference Include="..\..\src\Cookbook.Platform.Orchestrator\Cookbook.Platform.Orchestrator.csproj" />
     <ProjectReference Include="..\..\src\Cookbook.Platform.Shared\Cookbook.Platform.Shared.csproj" />
     <ProjectReference Include="..\..\src\Cookbook.Platform.Storage\Cookbook.Platform.Storage.csproj" />
   </ItemGroup>

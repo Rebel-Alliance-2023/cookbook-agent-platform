@@ -138,6 +138,10 @@ public record TaskState
     [JsonPropertyName("lastUpdated")]
     [JsonProperty("lastUpdated")]
     public DateTime LastUpdated { get; init; } = DateTime.UtcNow;
+    
+    [JsonPropertyName("metadata")]
+    [JsonProperty("metadata")]
+    public Dictionary<string, string>? Metadata { get; init; }
 }
 
 /// <summary>
@@ -167,4 +171,3 @@ public enum TaskStatus
     /// </summary>
     Expired
 }
-

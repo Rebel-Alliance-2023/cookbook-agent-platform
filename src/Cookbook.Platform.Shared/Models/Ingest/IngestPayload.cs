@@ -108,6 +108,68 @@ public record IngestConstraints
 }
 
 /// <summary>
+/// Search provider settings for query-based discovery.
+/// </summary>
+public record SearchSettings
+{
+    /// <summary>
+    /// The ID of the search provider to use (e.g., "brave", "google").
+    /// If not specified, the default provider will be used.
+    /// </summary>
+    [JsonPropertyName("providerId")]
+    [JsonProperty("providerId")]
+    public string? ProviderId { get; init; }
+
+    /// <summary>
+    /// Maximum number of candidate URLs to return from search.
+    /// </summary>
+    [JsonPropertyName("maxResults")]
+    [JsonProperty("maxResults")]
+    public int? MaxResults { get; init; }
+
+    /// <summary>
+    /// Market/locale for search results (e.g., "en-US").
+    /// </summary>
+    [JsonPropertyName("market")]
+    [JsonProperty("market")]
+    public string? Market { get; init; }
+
+    /// <summary>
+    /// Safe search filtering level (e.g., "off", "moderate", "strict").
+    /// </summary>
+    [JsonPropertyName("safeSearch")]
+    [JsonProperty("safeSearch")]
+    public string? SafeSearch { get; init; }
+}
+
+/// <summary>
+/// Options for normalize mode.
+/// </summary>
+public record NormalizeOptions
+{
+    /// <summary>
+    /// Specific areas to focus on for normalization.
+    /// </summary>
+    [JsonPropertyName("focusAreas")]
+    [JsonProperty("focusAreas")]
+    public IReadOnlyList<string>? FocusAreas { get; init; }
+
+    /// <summary>
+    /// Whether to automatically apply low-risk changes.
+    /// </summary>
+    [JsonPropertyName("autoApplyLowRisk")]
+    [JsonProperty("autoApplyLowRisk")]
+    public bool AutoApplyLowRisk { get; init; }
+
+    /// <summary>
+    /// Maximum risk level to include in suggestions.
+    /// </summary>
+    [JsonPropertyName("maxRiskLevel")]
+    [JsonProperty("maxRiskLevel")]
+    public NormalizePatchRiskCategory MaxRiskLevel { get; init; } = NormalizePatchRiskCategory.High;
+}
+
+/// <summary>
 /// Payload for ingest agent tasks.
 /// </summary>
 public record IngestPayload
@@ -139,6 +201,20 @@ public record IngestPayload
     [JsonPropertyName("recipeId")]
     [JsonProperty("recipeId")]
     public string? RecipeId { get; init; }
+    
+    /// <summary>
+    /// Options for normalize mode.
+    /// </summary>
+    [JsonPropertyName("normalizeOptions")]
+    [JsonProperty("normalizeOptions")]
+    public NormalizeOptions? NormalizeOptions { get; init; }
+    
+    /// <summary>
+    /// Search provider settings for query-based discovery (Mode=Query).
+    /// </summary>
+    [JsonPropertyName("search")]
+    [JsonProperty("search")]
+    public SearchSettings? Search { get; init; }
     
     /// <summary>
     /// Search constraints for query-based discovery.

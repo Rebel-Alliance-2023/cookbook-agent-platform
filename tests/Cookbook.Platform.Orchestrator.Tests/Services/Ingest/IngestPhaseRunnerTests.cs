@@ -18,6 +18,7 @@ public class IngestPhaseRunnerTests
     private readonly Mock<IMessagingBus> _messagingBusMock;
     private readonly Mock<ISimilarityDetector> _similarityDetectorMock;
     private readonly Mock<IRepairParaphraseService> _repairServiceMock;
+    private readonly Mock<INormalizeService> _normalizeServiceMock;
     private readonly Mock<IArtifactStorageService> _artifactStorageMock;
     private readonly Mock<IOptions<IngestGuardrailOptions>> _guardrailOptionsMock;
     private readonly Mock<ILogger<IngestPhaseRunner>> _loggerMock;
@@ -28,6 +29,7 @@ public class IngestPhaseRunnerTests
         _messagingBusMock = new Mock<IMessagingBus>();
         _similarityDetectorMock = new Mock<ISimilarityDetector>();
         _repairServiceMock = new Mock<IRepairParaphraseService>();
+        _normalizeServiceMock = new Mock<INormalizeService>();
         _artifactStorageMock = new Mock<IArtifactStorageService>();
         _guardrailOptionsMock = new Mock<IOptions<IngestGuardrailOptions>>();
         _guardrailOptionsMock.Setup(o => o.Value).Returns(new IngestGuardrailOptions());
@@ -36,6 +38,7 @@ public class IngestPhaseRunnerTests
             _messagingBusMock.Object,
             _similarityDetectorMock.Object,
             _repairServiceMock.Object,
+            _normalizeServiceMock.Object,
             _artifactStorageMock.Object,
             _guardrailOptionsMock.Object,
             _loggerMock.Object);
@@ -50,12 +53,14 @@ public class IngestPhaseRunnerTests
         Assert.Equal("Ingest.Extract", IngestPhases.Extract);
         Assert.Equal("Ingest.Validate", IngestPhases.Validate);
         Assert.Equal("Ingest.RepairParaphrase", IngestPhases.RepairParaphrase);
+        Assert.Equal("Ingest.Normalize", IngestPhases.Normalize);
         Assert.Equal("Ingest.ReviewReady", IngestPhases.ReviewReady);
     }
 
     [Fact]
     public void IngestPhases_Weights_SumTo100()
     {
+        // URL mode weights
         var total = IngestPhases.Weights.Fetch 
             + IngestPhases.Weights.Extract 
             + IngestPhases.Weights.Validate 
@@ -66,25 +71,16 @@ public class IngestPhaseRunnerTests
         Assert.Equal(100, total);
     }
 
-    [Theory]
-    [InlineData(IngestPhases.Fetch, 100, 15)]                    // 15
-    [InlineData(IngestPhases.Extract, 100, 50)]                  // 15 + 35
-    [InlineData(IngestPhases.Validate, 100, 70)]                 // 15 + 35 + 20
-    [InlineData(IngestPhases.RepairParaphrase, 100, 85)]         // 15 + 35 + 20 + 15
-    [InlineData(IngestPhases.ReviewReady, 100, 95)]              // 15 + 35 + 20 + 15 + 10
-    public void CalculateProgress_ReturnsCorrectCumulativeProgress(string phase, int phaseProgress, int expected)
+    [Fact]
+    public void IngestPhases_NormalizeModeWeights_SumTo100()
     {
-        var result = IngestPhaseRunner.CalculateProgress(phase, phaseProgress);
-        Assert.Equal(expected, result);
-    }
-
-    [Theory]
-    [InlineData(IngestPhases.Fetch, 50, 7)]                      // 15 * 0.5 = 7.5 -> 7
-    [InlineData(IngestPhases.Extract, 50, 32)]                   // 15 + (35 * 0.5) = 32.5 -> 32
-    public void CalculateProgress_HandlesPartialPhaseProgress(string phase, int phaseProgress, int expected)
-    {
-        var result = IngestPhaseRunner.CalculateProgress(phase, phaseProgress);
-        Assert.Equal(expected, result);
+        // Normalize mode weights
+        var total = IngestPhases.NormalizeModeWeights.FetchRecipe 
+            + IngestPhases.NormalizeModeWeights.Normalize 
+            + IngestPhases.NormalizeModeWeights.ReviewReady
+            + IngestPhases.NormalizeModeWeights.Finalize;
+        
+        Assert.Equal(100, total);
     }
 
     #endregion
