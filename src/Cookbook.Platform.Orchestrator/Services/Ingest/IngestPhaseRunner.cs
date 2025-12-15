@@ -1,4 +1,6 @@
+using System.Diagnostics;
 using System.Text.Json;
+using Cookbook.Platform.Orchestrator.Metrics;
 using Cookbook.Platform.Shared.Configuration;
 using Cookbook.Platform.Shared.Messaging;
 using Cookbook.Platform.Shared.Models.Ingest;
@@ -177,6 +179,7 @@ public class IngestPhaseRunner
     private readonly INormalizeService _normalizeService;
     private readonly IArtifactStorageService _artifactStorage;
     private readonly IngestGuardrailOptions _guardrailOptions;
+    private readonly IngestMetrics _metrics;
     private readonly ILogger<IngestPhaseRunner> _logger;
 
     public IngestPhaseRunner(
@@ -186,6 +189,7 @@ public class IngestPhaseRunner
         INormalizeService normalizeService,
         IArtifactStorageService artifactStorage,
         IOptions<IngestGuardrailOptions> guardrailOptions,
+        IngestMetrics metrics,
         ILogger<IngestPhaseRunner> logger)
     {
         _messagingBus = messagingBus;
@@ -194,6 +198,7 @@ public class IngestPhaseRunner
         _normalizeService = normalizeService;
         _artifactStorage = artifactStorage;
         _guardrailOptions = guardrailOptions.Value;
+        _metrics = metrics;
         _logger = logger;
     }
 
@@ -202,7 +207,10 @@ public class IngestPhaseRunner
     /// </summary>
     public async Task<IngestPipelineResult> ExecuteAsync(AgentTask task, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Starting ingest pipeline for task {TaskId}", task.TaskId);
+        var pipelineStopwatch = Stopwatch.StartNew();
+        var mode = "Url"; // Will be updated after payload parsing
+        
+        IngestLogEvents.PipelineStarted(_logger, task.TaskId, mode);
 
         // Parse the ingest payload
         IngestPayload payload;
@@ -212,10 +220,14 @@ public class IngestPhaseRunner
             {
                 PropertyNameCaseInsensitive = true
             }) ?? throw new InvalidOperationException("Failed to deserialize ingest payload");
+            
+            // Update mode now that we have the payload
+            mode = payload.Mode.ToString();
         }
         catch (JsonException ex)
         {
             _logger.LogError(ex, "Failed to parse ingest payload for task {TaskId}", task.TaskId);
+            _metrics.RecordPhaseFailure("Initialization", "INVALID_PAYLOAD");
             return new IngestPipelineResult
             {
                 Success = false,
@@ -224,6 +236,9 @@ public class IngestPhaseRunner
                 FailedPhase = "Initialization"
             };
         }
+        
+        // Record task created metric
+        _metrics.RecordTaskCreated(mode);
 
         var context = new IngestPipelineContext
         {
@@ -297,6 +312,11 @@ public class IngestPhaseRunner
                 ErrorCode = "INTERNAL_ERROR",
                 FailedPhase = "Unknown"
             };
+        }
+        finally
+        {
+            pipelineStopwatch.Stop();
+            _metrics.RecordPipelineDuration(pipelineStopwatch.Elapsed, mode);
         }
     }
 
@@ -428,18 +448,29 @@ public class IngestPhaseRunner
                 errors.Add($"High verbatim similarity detected: {report.MaxNgramSimilarity:P0} n-gram similarity, " +
                           $"{report.MaxContiguousTokenOverlap} contiguous token overlap. " +
                           "Content may violate copyright policy.");
+                
+                // CC-010: Record guardrail violation metric
+                _metrics.RecordGuardrailViolation("similarity_error");
+                IngestLogEvents.GuardrailViolation(_logger, context.Task.TaskId, "similarity_error",
+                    $"N-gram: {report.MaxNgramSimilarity:P0}, Overlap: {report.MaxContiguousTokenOverlap}");
             }
             else if (report.MaxNgramSimilarity >= 0.5 || report.MaxContiguousTokenOverlap >= 25)
             {
                 warnings.Add($"Moderate verbatim similarity detected: {report.MaxNgramSimilarity:P0} n-gram similarity. " +
                             "Consider reviewing for potential copyright concerns.");
+                
+                // CC-010: Record guardrail warning metric
+                _metrics.RecordGuardrailViolation("similarity_warning");
+                IngestLogEvents.GuardrailViolation(_logger, context.Task.TaskId, "similarity_warning",
+                    $"N-gram: {report.MaxNgramSimilarity:P0}, Overlap: {report.MaxContiguousTokenOverlap}");
             }
 
             // Store similarity report as artifact
             await StoreSimilarityArtifactAsync(context, report);
 
-            _logger.LogInformation("Similarity analysis complete for task {TaskId}: overlap={Overlap}, similarity={Similarity:P2}, violates={Violates}",
-                context.Task.TaskId, report.MaxContiguousTokenOverlap, report.MaxNgramSimilarity, report.ViolatesPolicy);
+            // CC-005: Structured logging for similarity check
+            IngestLogEvents.SimilarityCheckResult(_logger, context.Task.TaskId, 
+                report.MaxContiguousTokenOverlap, report.MaxNgramSimilarity);
         }
         catch (Exception ex)
         {

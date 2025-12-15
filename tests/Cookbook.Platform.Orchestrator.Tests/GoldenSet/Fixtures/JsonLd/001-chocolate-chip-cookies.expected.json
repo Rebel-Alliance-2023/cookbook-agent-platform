@@ -1,0 +1,46 @@
+{
+  "name": "Classic Chocolate Chip Cookies",
+  "description": "Soft and chewy chocolate chip cookies with crispy edges. A timeless family favorite that's perfect for any occasion.",
+  "prepTimeMinutes": 15,
+  "cookTimeMinutes": 12,
+  "totalTimeMinutes": 27,
+  "servings": 24,
+  "servingUnit": "cookies",
+  "cuisine": "American",
+  "category": "Dessert",
+  "difficulty": "Easy",
+  "tags": ["cookies", "chocolate", "dessert", "baking", "family-friendly"],
+  "author": "Sarah Baker",
+  "source": {
+    "url": "https://example-recipes.com/chocolate-chip-cookies",
+    "siteName": "Example Recipes",
+    "extractionMethod": "JsonLd"
+  },
+  "nutrition": {
+    "servingSize": "1 cookie",
+    "calories": 120,
+    "fat": "6g",
+    "carbohydrates": "16g",
+    "protein": "1g"
+  },
+  "ingredients": [
+    { "name": "all-purpose flour", "quantity": 2.25, "unit": "cups", "raw": "2 1/4 cups all-purpose flour" },
+    { "name": "baking soda", "quantity": 1, "unit": "teaspoon", "raw": "1 teaspoon baking soda" },
+    { "name": "salt", "quantity": 1, "unit": "teaspoon", "raw": "1 teaspoon salt" },
+    { "name": "butter, softened", "quantity": 1, "unit": "cup", "raw": "1 cup (2 sticks) butter, softened" },
+    { "name": "granulated sugar", "quantity": 0.75, "unit": "cup", "raw": "3/4 cup granulated sugar" },
+    { "name": "brown sugar", "quantity": 0.75, "unit": "cup", "raw": "3/4 cup packed brown sugar" },
+    { "name": "eggs", "quantity": 2, "unit": "large", "raw": "2 large eggs" },
+    { "name": "vanilla extract", "quantity": 1, "unit": "teaspoon", "raw": "1 teaspoon vanilla extract" },
+    { "name": "chocolate chips", "quantity": 2, "unit": "cups", "raw": "2 cups chocolate chips" }
+  ],
+  "instructions": [
+    "Preheat oven to 375°F (190°C).",
+    "Combine flour, baking soda, and salt in a small bowl.",
+    "Beat butter, granulated sugar, brown sugar and vanilla extract in large mixer bowl until creamy.",
+    "Add eggs, one at a time, beating well after each addition.",
+    "Gradually beat in flour mixture. Stir in chocolate chips.",
+    "Drop rounded tablespoon of dough onto ungreased baking sheets.",
+    "Bake for 9 to 11 minutes or until golden brown. Cool on baking sheets for 2 minutes; remove to wire racks to cool completely."
+  ]
+}

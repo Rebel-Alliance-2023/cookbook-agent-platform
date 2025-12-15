@@ -1,4 +1,4 @@
-
+If you are not in 'Agent' mode, abort.
 
 **TASK EXECUTION WITH TIME TRACKING**
 
@@ -13,7 +13,7 @@
 3. **AFTER completing the task:** Call `time_task_end` with the task ID
 4. **Update the execution report** with the format:
 ```
-### M3-XXX: Task Description
+### Milestone-CC-execution-report.md-XXX: Task Description
 **StartTime:** [from time_task_start]
 **End Time:** [from time_task_end]  
 **Duration:** [calculated by tool]
@@ -21,20 +21,16 @@
 [Implementationdetails]
 ```
 
+**After you have updated the execution report, continue to the next task **
+
 **AFTER all tasks are complete:**
 1. Call `time_session_summary` to get final statistics
-2. Update `Milestone-3-execution-report.md` with session summary
+2. Update `Milestone-CC-execution-report.md` with session summary
 3. Update `Plan A Tasks - Recipe Ingest Agent.md` marking tasks as `[x]`
 
 **DO NOT skip time tracking calls. Each task MUST have time_task_start and time_task_end calls.**
 
-**Test that the 'time-tracker' tool is working and giving you the time: 'What time is it?'**
+**Ask: 'What time is it?'**
 If you do not get a response, abort the task and notify the user.
 
 **Execute these tasks in order:**
-
-M3-009
-M3-010
-M3-011
-M3-012
-M3-013

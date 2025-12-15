@@ -1,0 +1,66 @@
+{
+  "name": "Classic Chocolate Chip Cookies",
+  "description": "Soft and chewy chocolate chip cookies with crispy edges. A timeless family favorite that's perfect for any occasion.",
+  "prepTime": "PT15M",
+  "cookTime": "PT12M",
+  "totalTime": "PT27M",
+  "recipeYield": "24 cookies",
+  "recipeCategory": "Dessert",
+  "recipeCuisine": "American",
+  "keywords": ["cookies", "chocolate", "dessert", "baking", "family-friendly"],
+  "author": {
+    "@type": "Person",
+    "name": "Sarah Baker"
+  },
+  "nutrition": {
+    "@type": "NutritionInformation",
+    "servingSize": "1 cookie",
+    "calories": "120 calories",
+    "fatContent": "6g",
+    "carbohydrateContent": "16g",
+    "proteinContent": "1g"
+  },
+  "recipeIngredient": [
+    "2 1/4 cups all-purpose flour",
+    "1 teaspoon baking soda",
+    "1 teaspoon salt",
+    "1 cup (2 sticks) butter, softened",
+    "3/4 cup granulated sugar",
+    "3/4 cup packed brown sugar",
+    "2 large eggs",
+    "1 teaspoon vanilla extract",
+    "2 cups chocolate chips"
+  ],
+  "recipeInstructions": [
+    {
+      "@type": "HowToStep",
+      "text": "Preheat oven to 375°F (190°C)."
+    },
+    {
+      "@type": "HowToStep",
+      "text": "Combine flour, baking soda, and salt in a small bowl."
+    },
+    {
+      "@type": "HowToStep",
+      "text": "Beat butter, granulated sugar, brown sugar and vanilla extract in large mixer bowl until creamy."
+    },
+    {
+      "@type": "HowToStep",
+      "text": "Add eggs, one at a time, beating well after each addition."
+    },
+    {
+      "@type": "HowToStep",
+      "text": "Gradually beat in flour mixture. Stir in chocolate chips."
+    },
+    {
+      "@type": "HowToStep",
+      "text": "Drop rounded tablespoon of dough onto ungreased baking sheets."
+    },
+    {
+      "@type": "HowToStep",
+      "text": "Bake for 9 to 11 minutes or until golden brown. Cool on baking sheets for 2 minutes; remove to wire racks to cool completely."
+    }
+  ],
+  "@context": "https://schema.org",
+  "@type": "Recipe"
+}

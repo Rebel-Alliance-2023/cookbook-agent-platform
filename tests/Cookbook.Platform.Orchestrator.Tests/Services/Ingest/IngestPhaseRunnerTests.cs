@@ -1,4 +1,6 @@
+using System.Diagnostics.Metrics;
 using System.Text.Json;
+using Cookbook.Platform.Orchestrator.Metrics;
 using Cookbook.Platform.Orchestrator.Services.Ingest;
 using Cookbook.Platform.Shared.Configuration;
 using Cookbook.Platform.Shared.Messaging;
@@ -21,6 +23,7 @@ public class IngestPhaseRunnerTests
     private readonly Mock<INormalizeService> _normalizeServiceMock;
     private readonly Mock<IArtifactStorageService> _artifactStorageMock;
     private readonly Mock<IOptions<IngestGuardrailOptions>> _guardrailOptionsMock;
+    private readonly IngestMetrics _metrics;
     private readonly Mock<ILogger<IngestPhaseRunner>> _loggerMock;
     private readonly IngestPhaseRunner _runner;
 
@@ -33,6 +36,11 @@ public class IngestPhaseRunnerTests
         _artifactStorageMock = new Mock<IArtifactStorageService>();
         _guardrailOptionsMock = new Mock<IOptions<IngestGuardrailOptions>>();
         _guardrailOptionsMock.Setup(o => o.Value).Returns(new IngestGuardrailOptions());
+        
+        // Create a real IngestMetrics with a test meter factory
+        var meterFactory = new TestMeterFactory();
+        _metrics = new IngestMetrics(meterFactory);
+        
         _loggerMock = new Mock<ILogger<IngestPhaseRunner>>();
         _runner = new IngestPhaseRunner(
             _messagingBusMock.Object,
@@ -41,6 +49,7 @@ public class IngestPhaseRunnerTests
             _normalizeServiceMock.Object,
             _artifactStorageMock.Object,
             _guardrailOptionsMock.Object,
+            _metrics,
             _loggerMock.Object);
     }
 

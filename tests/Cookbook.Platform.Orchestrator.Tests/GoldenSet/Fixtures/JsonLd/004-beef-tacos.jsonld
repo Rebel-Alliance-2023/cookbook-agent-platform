@@ -1,0 +1,70 @@
+{
+  "name": "Homemade Beef Tacos",
+  "description": "Authentic Mexican-style beef tacos with seasoned ground beef, fresh toppings, and warm corn tortillas. Perfect for Taco Tuesday!",
+  "prepTime": "PT15M",
+  "cookTime": "PT15M",
+  "totalTime": "PT30M",
+  "recipeYield": "12 tacos",
+  "recipeCategory": "Main Course",
+  "recipeCuisine": "Mexican",
+  "keywords": ["tacos", "beef", "mexican", "quick dinner", "family meal"],
+  "author": {
+    "@type": "Person",
+    "name": "Maria Garcia"
+  },
+  "nutrition": {
+    "@type": "NutritionInformation",
+    "servingSize": "2 tacos",
+    "calories": "350 calories",
+    "fatContent": "18g",
+    "carbohydrateContent": "28g",
+    "proteinContent": "22g"
+  },
+  "recipeIngredient": [
+    "1 pound ground beef",
+    "1 tablespoon olive oil",
+    "1 small onion, diced",
+    "2 cloves garlic, minced",
+    "2 tablespoons taco seasoning",
+    "1/4 cup water",
+    "12 small corn tortillas",
+    "1 cup shredded cheddar cheese",
+    "1 cup shredded lettuce",
+    "1 cup diced tomatoes",
+    "1/2 cup sour cream",
+    "Fresh cilantro for garnish",
+    "Lime wedges for serving"
+  ],
+  "recipeInstructions": [
+    {
+      "@type": "HowToStep",
+      "text": "Heat olive oil in a large skillet over medium-high heat. Add onion and cook until softened, about 3 minutes."
+    },
+    {
+      "@type": "HowToStep",
+      "text": "Add ground beef and cook, breaking it apart with a spoon, until browned, about 5-7 minutes. Drain excess fat."
+    },
+    {
+      "@type": "HowToStep",
+      "text": "Add garlic and taco seasoning, stir for 30 seconds until fragrant."
+    },
+    {
+      "@type": "HowToStep",
+      "text": "Pour in water and simmer for 3-4 minutes until sauce thickens slightly."
+    },
+    {
+      "@type": "HowToStep",
+      "text": "Warm tortillas in a dry skillet or directly over a gas flame for about 30 seconds per side."
+    },
+    {
+      "@type": "HowToStep",
+      "text": "Fill each tortilla with seasoned beef and top with cheese, lettuce, tomatoes, sour cream, and cilantro."
+    },
+    {
+      "@type": "HowToStep",
+      "text": "Serve immediately with lime wedges on the side."
+    }
+  ],
+  "@context": "https://schema.org",
+  "@type": "Recipe"
+}

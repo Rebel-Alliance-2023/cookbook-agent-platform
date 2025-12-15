@@ -1,3 +1,4 @@
+using Cookbook.Platform.Shared.Prompts;
 using Cookbook.Platform.Storage;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -18,6 +19,9 @@ builder.AddAzureBlobClient("blobs");
 builder.Services.AddCosmosRepositoriesWithInitialization(builder.Configuration);
 builder.Services.AddBlobStorage(builder.Configuration);
 
+// Add prompt renderer for prompt tools
+builder.Services.AddSingleton<IPromptRenderer, ScribanPromptRenderer>();
+
 // Add MCP server with HTTP transport
 builder.Services.AddMcpServer()
     .WithHttpTransport()
@@ -32,3 +36,4 @@ app.MapDefaultEndpoints();
 app.MapMcp();
 
 app.Run();
+

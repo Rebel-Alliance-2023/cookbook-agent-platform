@@ -1,4 +1,5 @@
 using Cookbook.Platform.Infrastructure;
+using Cookbook.Platform.Orchestrator.Metrics;
 using Cookbook.Platform.Orchestrator.Services;
 using Cookbook.Platform.Orchestrator.Services.Ingest;
 using Cookbook.Platform.Shared.Configuration;
@@ -33,6 +34,9 @@ builder.Services.Configure<IngestOptions>(
 builder.Services.Configure<IngestGuardrailOptions>(
     builder.Configuration.GetSection(IngestGuardrailOptions.SectionName));
 
+// Add metrics instrumentation
+builder.Services.AddSingleton<IngestMetrics>();
+
 // Add orchestrator services
 builder.Services.AddSingleton<OrchestratorService>();
 builder.Services.AddSingleton<AgentPipeline>();
@@ -66,9 +70,14 @@ builder.Services.AddSingleton<INormalizeService, NormalizeService>();
 // Add Artifact Storage services
 builder.Services.AddSingleton<IArtifactStorageService, BlobArtifactStorageService>();
 
+// Add Artifact Retention options
+builder.Services.Configure<ArtifactRetentionOptions>(
+    builder.Configuration.GetSection(ArtifactRetentionOptions.SectionName));
+
 // Add background services
 builder.Services.AddHostedService<TaskProcessorService>();
 builder.Services.AddHostedService<DraftExpirationService>();
+builder.Services.AddHostedService<ArtifactRetentionService>();
 
 // Add HTTP clients for A2A agents with service discovery
 builder.Services.AddHttpClient("ResearchAgent", client =>

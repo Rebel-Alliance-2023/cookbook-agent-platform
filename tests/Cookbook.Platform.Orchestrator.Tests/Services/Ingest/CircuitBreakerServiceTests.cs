@@ -1,3 +1,5 @@
+using System.Diagnostics.Metrics;
+using Cookbook.Platform.Orchestrator.Metrics;
 using Cookbook.Platform.Orchestrator.Services.Ingest;
 using Cookbook.Platform.Shared.Configuration;
 using Microsoft.Extensions.Logging;
@@ -13,11 +15,17 @@ namespace Cookbook.Platform.Orchestrator.Tests.Services.Ingest;
 public class CircuitBreakerServiceTests
 {
     private readonly Mock<ILogger<CircuitBreakerService>> _loggerMock;
+    private readonly IngestMetrics _metrics;
     private readonly IngestOptions _options;
 
     public CircuitBreakerServiceTests()
     {
         _loggerMock = new Mock<ILogger<CircuitBreakerService>>();
+        
+        // Create a real IngestMetrics with a test meter factory
+        var meterFactory = new TestMeterFactory();
+        _metrics = new IngestMetrics(meterFactory);
+        
         _options = new IngestOptions
         {
             CircuitBreaker = new CircuitBreakerOptions
@@ -32,7 +40,7 @@ public class CircuitBreakerServiceTests
     private CircuitBreakerService CreateService(IngestOptions? options = null)
     {
         var opts = Options.Create(options ?? _options);
-        return new CircuitBreakerService(opts, _loggerMock.Object);
+        return new CircuitBreakerService(opts, _metrics, _loggerMock.Object);
     }
 
     #region Initial State Tests

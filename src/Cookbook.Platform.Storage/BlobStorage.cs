@@ -12,11 +12,15 @@ public interface IBlobStorage
 {
     Task<string> UploadAsync(string name, byte[] content, string? contentType = null, CancellationToken cancellationToken = default);
     Task<string> UploadAsync(string name, Stream content, string? contentType = null, CancellationToken cancellationToken = default);
+    Task<string> UploadWithMetadataAsync(string name, byte[] content, string? contentType = null, IDictionary<string, string>? metadata = null, CancellationToken cancellationToken = default);
+    Task<string> UploadWithMetadataAsync(string name, Stream content, string? contentType = null, IDictionary<string, string>? metadata = null, CancellationToken cancellationToken = default);
     Task<byte[]?> DownloadAsync(string name, CancellationToken cancellationToken = default);
     Task<Stream?> DownloadStreamAsync(string name, CancellationToken cancellationToken = default);
     Task<bool> ExistsAsync(string name, CancellationToken cancellationToken = default);
     Task DeleteAsync(string name, CancellationToken cancellationToken = default);
     Task<List<string>> ListAsync(string? prefix = null, CancellationToken cancellationToken = default);
+    Task<IDictionary<string, string>?> GetMetadataAsync(string name, CancellationToken cancellationToken = default);
+    Task SetMetadataAsync(string name, IDictionary<string, string> metadata, CancellationToken cancellationToken = default);
 }
 
 /// <summary>
@@ -33,13 +37,23 @@ public class AzureBlobStorage : IBlobStorage
         _logger = logger;
     }
 
-    public async Task<string> UploadAsync(string name, byte[] content, string? contentType = null, CancellationToken cancellationToken = default)
+    public Task<string> UploadAsync(string name, byte[] content, string? contentType = null, CancellationToken cancellationToken = default)
     {
-        using var stream = new MemoryStream(content);
-        return await UploadAsync(name, stream, contentType, cancellationToken);
+        return UploadWithMetadataAsync(name, content, contentType, null, cancellationToken);
     }
 
-    public async Task<string> UploadAsync(string name, Stream content, string? contentType = null, CancellationToken cancellationToken = default)
+    public Task<string> UploadAsync(string name, Stream content, string? contentType = null, CancellationToken cancellationToken = default)
+    {
+        return UploadWithMetadataAsync(name, content, contentType, null, cancellationToken);
+    }
+
+    public async Task<string> UploadWithMetadataAsync(string name, byte[] content, string? contentType = null, IDictionary<string, string>? metadata = null, CancellationToken cancellationToken = default)
+    {
+        using var stream = new MemoryStream(content);
+        return await UploadWithMetadataAsync(name, stream, contentType, metadata, cancellationToken);
+    }
+
+    public async Task<string> UploadWithMetadataAsync(string name, Stream content, string? contentType = null, IDictionary<string, string>? metadata = null, CancellationToken cancellationToken = default)
     {
         await _containerClient.CreateIfNotExistsAsync(cancellationToken: cancellationToken);
         
@@ -49,6 +63,11 @@ public class AzureBlobStorage : IBlobStorage
         if (!string.IsNullOrWhiteSpace(contentType))
         {
             options.HttpHeaders = new BlobHttpHeaders { ContentType = contentType };
+        }
+
+        if (metadata != null && metadata.Count > 0)
+        {
+            options.Metadata = new Dictionary<string, string>(metadata);
         }
 
         await blobClient.UploadAsync(content, options, cancellationToken);
@@ -79,8 +98,8 @@ public class AzureBlobStorage : IBlobStorage
             return null;
         }
 
-        var response = await blobClient.DownloadStreamingAsync(cancellationToken: cancellationToken);
-        return response.Value.Content;
+        var response = await blobClient.OpenReadAsync(cancellationToken: cancellationToken);
+        return response;
     }
 
     public async Task<bool> ExistsAsync(string name, CancellationToken cancellationToken = default)
@@ -106,5 +125,25 @@ public class AzureBlobStorage : IBlobStorage
         }
 
         return results;
+    }
+
+    public async Task<IDictionary<string, string>?> GetMetadataAsync(string name, CancellationToken cancellationToken = default)
+    {
+        var blobClient = _containerClient.GetBlobClient(name);
+        
+        if (!await blobClient.ExistsAsync(cancellationToken))
+        {
+            return null;
+        }
+
+        var properties = await blobClient.GetPropertiesAsync(cancellationToken: cancellationToken);
+        return properties.Value.Metadata;
+    }
+
+    public async Task SetMetadataAsync(string name, IDictionary<string, string> metadata, CancellationToken cancellationToken = default)
+    {
+        var blobClient = _containerClient.GetBlobClient(name);
+        await blobClient.SetMetadataAsync(metadata, cancellationToken: cancellationToken);
+        _logger.LogDebug("Set metadata on blob {BlobName}", name);
     }
 }

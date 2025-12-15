@@ -517,37 +517,37 @@
 
 | ID | Task | Size | Priority | Deps | Status |
 |----|------|------|----------|------|--------|
-| CC-001 | Implement `prompt_list` tool | M | P1 | M0-023 | [ ] |
-| CC-002 | Implement `prompt_get` tool | M | P1 | M0-023 | [ ] |
-| CC-003 | Implement `prompt_get_active` tool | M | P1 | M0-023 | [ ] |
-| CC-004 | Implement `prompt_render` tool | M | P1 | M0-026 | [ ] |
+| CC-001 | Implement `prompt_list` tool | M | P1 | M0-023 | [x] |
+| CC-002 | Implement `prompt_get` tool | M | P1 | M0-023 | [x] |
+| CC-003 | Implement `prompt_get_active` tool | M | P1 | M0-023 | [x] |
+| CC-004 | Implement `prompt_render` tool | M | P1 | M0-026 | [x] |
 
 ### Observability
 
 | ID | Task | Size | Priority | Deps | Status |
 |----|------|------|----------|------|--------|
-| CC-005 | Add structured logging | M | P1 | M1-009 | [ ] |
-| CC-006 | Add tasks created metric | S | P2 | M1-004 | [ ] |
-| CC-007 | Add phase duration metric | M | P2 | M1-009 | [ ] |
-| CC-008 | Add phase failures metric | S | P2 | M1-013 | [ ] |
-| CC-009 | Add extraction method metric | S | P2 | M1-054 | [ ] |
-| CC-010 | Add guardrail violations metric | S | P2 | M3-011 | [ ] |
-| CC-011 | Add circuit breaker trips metric | S | P2 | M1-026 | [ ] |
+| CC-005 | Add structured logging | M | P1 | M1-009 | [x] |
+| CC-006 | Add tasks created metric | S | P2 | M1-004 | [x] |
+| CC-007 | Add phase duration metric | M | P2 | M1-009 | [x] |
+| CC-008 | Add phase failures metric | S | P2 | M1-013 | [x] |
+| CC-009 | Add extraction method metric | S | P2 | M1-054 | [x] |
+| CC-010 | Add guardrail violations metric | S | P2 | M3-011 | [x] |
+| CC-011 | Add circuit breaker trips metric | S | P2 | M1-026 | [x] |
 
 ### Retention
 
 | ID | Task | Size | Priority | Deps | Status |
 |----|------|------|----------|------|--------|
-| CC-012 | Configure 180-day retention for committed | M | P2 | M1-061 | [ ] |
-| CC-013 | Configure 30-day retention for others | M | P2 | M1-061 | [ ] |
+| CC-012 | Configure 180-day retention for committed | M | P2 | M1-061 | [x] |
+| CC-013 | Configure 30-day retention for others | M | P2 | M1-061 | [x] |
 
 ### Golden Set
 
 | ID | Task | Size | Priority | Deps | Status |
 |----|------|------|----------|------|--------|
-| CC-014 | Curate 10-15 recipe fixtures | L | P2 | M1-081 | [ ] |
-| CC-015 | Create golden set test suite | L | P2 | CC-014 | [ ] |
-| CC-016 | Add to CI pipeline | M | P2 | CC-015 | [ ] |
+| CC-014 | Curate 10-15 recipe fixtures | L | P2 | M1-081 | [x] |
+| CC-015 | Create golden set test suite | L | P2 | CC-014 | [x] |
+| CC-016 | Add to CI pipeline | M | P2 | CC-015 | [x] |
 
 ---
 

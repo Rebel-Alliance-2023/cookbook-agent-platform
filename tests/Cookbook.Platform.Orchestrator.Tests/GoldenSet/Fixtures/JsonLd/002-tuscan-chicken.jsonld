@@ -1,0 +1,68 @@
+{
+  "name": "Creamy Garlic Tuscan Chicken",
+  "description": "Tender chicken breasts smothered in a creamy garlic sauce with sun-dried tomatoes and spinach. Restaurant-quality Italian dinner ready in 30 minutes.",
+  "prepTime": "PT10M",
+  "cookTime": "PT20M",
+  "totalTime": "PT30M",
+  "recipeYield": "4 servings",
+  "recipeCategory": "Main Course",
+  "recipeCuisine": "Italian",
+  "keywords": ["chicken", "italian", "creamy", "garlic", "quick dinner"],
+  "author": {
+    "@type": "Person",
+    "name": "Marco Rossi"
+  },
+  "nutrition": {
+    "@type": "NutritionInformation",
+    "servingSize": "1 serving",
+    "calories": "420 calories",
+    "fatContent": "24g",
+    "carbohydrateContent": "8g",
+    "proteinContent": "42g"
+  },
+  "recipeIngredient": [
+    "4 boneless skinless chicken breasts",
+    "2 tablespoons olive oil",
+    "1 tablespoon butter",
+    "6 cloves garlic, minced",
+    "1 cup heavy cream",
+    "1/2 cup chicken broth",
+    "1/2 cup sun-dried tomatoes, chopped",
+    "1/2 cup grated parmesan cheese",
+    "2 cups fresh spinach",
+    "1 teaspoon Italian seasoning",
+    "Salt and pepper to taste"
+  ],
+  "recipeInstructions": [
+    {
+      "@type": "HowToStep",
+      "text": "Season chicken breasts with salt, pepper, and Italian seasoning."
+    },
+    {
+      "@type": "HowToStep",
+      "text": "Heat olive oil in a large skillet over medium-high heat. Cook chicken 7-8 minutes per side until golden and cooked through. Remove and set aside."
+    },
+    {
+      "@type": "HowToStep",
+      "text": "Reduce heat to medium. Add butter and garlic, sauté for 1 minute until fragrant."
+    },
+    {
+      "@type": "HowToStep",
+      "text": "Pour in heavy cream and chicken broth. Bring to a simmer, stirring occasionally."
+    },
+    {
+      "@type": "HowToStep",
+      "text": "Add sun-dried tomatoes and parmesan cheese. Stir until cheese melts and sauce thickens."
+    },
+    {
+      "@type": "HowToStep",
+      "text": "Add spinach and cook until wilted, about 2 minutes."
+    },
+    {
+      "@type": "HowToStep",
+      "text": "Return chicken to the skillet, spooning sauce over the top. Serve immediately."
+    }
+  ],
+  "@context": "https://schema.org",
+  "@type": "Recipe"
+}

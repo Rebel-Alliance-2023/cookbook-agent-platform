@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using Cookbook.Platform.Orchestrator.Metrics;
 using Cookbook.Platform.Shared.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -92,13 +93,16 @@ public class CircuitBreakerService : ICircuitBreakerService
 {
     private readonly ConcurrentDictionary<string, DomainCircuitState> _circuits = new();
     private readonly CircuitBreakerOptions _options;
+    private readonly IngestMetrics _metrics;
     private readonly ILogger<CircuitBreakerService> _logger;
 
     public CircuitBreakerService(
         IOptions<IngestOptions> ingestOptions,
+        IngestMetrics metrics,
         ILogger<CircuitBreakerService> logger)
     {
         _options = ingestOptions.Value.CircuitBreaker;
+        _metrics = metrics;
         _logger = logger;
     }
 
@@ -181,6 +185,10 @@ public class CircuitBreakerService : ICircuitBreakerService
         {
             state.State = CircuitState.Open;
             state.OpenedAt = now;
+            
+            // CC-011: Record circuit breaker trip metric
+            _metrics.RecordCircuitBreakerTrip(normalizedDomain);
+            IngestLogEvents.CircuitBreakerTripped(_logger, normalizedDomain);
             
             _logger.LogWarning(
                 "Circuit breaker OPENED for domain {Domain}. {Count} failures in {Window} minutes. Blocking for {Block} minutes.",

@@ -1,0 +1,48 @@
+{
+  "name": "Creamy Garlic Tuscan Chicken",
+  "description": "Tender chicken breasts smothered in a creamy garlic sauce with sun-dried tomatoes and spinach. Restaurant-quality Italian dinner ready in 30 minutes.",
+  "prepTimeMinutes": 10,
+  "cookTimeMinutes": 20,
+  "totalTimeMinutes": 30,
+  "servings": 4,
+  "servingUnit": "servings",
+  "cuisine": "Italian",
+  "category": "Main Course",
+  "difficulty": "Medium",
+  "tags": ["chicken", "italian", "creamy", "garlic", "quick dinner"],
+  "author": "Marco Rossi",
+  "source": {
+    "url": "https://example-recipes.com/tuscan-chicken",
+    "siteName": "Example Recipes",
+    "extractionMethod": "JsonLd"
+  },
+  "nutrition": {
+    "servingSize": "1 serving",
+    "calories": 420,
+    "fat": "24g",
+    "carbohydrates": "8g",
+    "protein": "42g"
+  },
+  "ingredients": [
+    { "name": "boneless skinless chicken breasts", "quantity": 4, "unit": "", "raw": "4 boneless skinless chicken breasts" },
+    { "name": "olive oil", "quantity": 2, "unit": "tablespoons", "raw": "2 tablespoons olive oil" },
+    { "name": "butter", "quantity": 1, "unit": "tablespoon", "raw": "1 tablespoon butter" },
+    { "name": "garlic, minced", "quantity": 6, "unit": "cloves", "raw": "6 cloves garlic, minced" },
+    { "name": "heavy cream", "quantity": 1, "unit": "cup", "raw": "1 cup heavy cream" },
+    { "name": "chicken broth", "quantity": 0.5, "unit": "cup", "raw": "1/2 cup chicken broth" },
+    { "name": "sun-dried tomatoes, chopped", "quantity": 0.5, "unit": "cup", "raw": "1/2 cup sun-dried tomatoes, chopped" },
+    { "name": "grated parmesan cheese", "quantity": 0.5, "unit": "cup", "raw": "1/2 cup grated parmesan cheese" },
+    { "name": "fresh spinach", "quantity": 2, "unit": "cups", "raw": "2 cups fresh spinach" },
+    { "name": "Italian seasoning", "quantity": 1, "unit": "teaspoon", "raw": "1 teaspoon Italian seasoning" },
+    { "name": "salt and pepper", "quantity": null, "unit": "to taste", "raw": "Salt and pepper to taste" }
+  ],
+  "instructions": [
+    "Season chicken breasts with salt, pepper, and Italian seasoning.",
+    "Heat olive oil in a large skillet over medium-high heat. Cook chicken 7-8 minutes per side until golden and cooked through. Remove and set aside.",
+    "Reduce heat to medium. Add butter and garlic, sauté for 1 minute until fragrant.",
+    "Pour in heavy cream and chicken broth. Bring to a simmer, stirring occasionally.",
+    "Add sun-dried tomatoes and parmesan cheese. Stir until cheese melts and sauce thickens.",
+    "Add spinach and cook until wilted, about 2 minutes.",
+    "Return chicken to the skillet, spooning sauce over the top. Serve immediately."
+  ]
+}

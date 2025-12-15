@@ -1,0 +1,92 @@
+name: Golden Set Tests
+
+on:
+  push:
+    branches: [ main, develop, 'feature/**', 'Recipe-Ingest-Agent' ]
+    paths:
+      - 'src/Cookbook.Platform.Orchestrator/**'
+      - 'tests/Cookbook.Platform.Orchestrator.Tests/GoldenSet/**'
+      - '.github/workflows/golden-set.yml'
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - 'src/Cookbook.Platform.Orchestrator/**'
+      - 'tests/Cookbook.Platform.Orchestrator.Tests/GoldenSet/**'
+  workflow_dispatch:
+
+jobs:
+  golden-set:
+    name: Run Golden Set Tests
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '10.0.x'
+        dotnet-quality: 'preview'
+
+    - name: Restore dependencies
+      run: dotnet restore
+
+    - name: Build
+      run: dotnet build --no-restore --configuration Release
+
+    - name: Run Golden Set Tests
+      run: |
+        dotnet test tests/Cookbook.Platform.Orchestrator.Tests \
+          --no-build \
+          --configuration Release \
+          --filter "Category=GoldenSet" \
+          --logger "trx;LogFileName=golden-set-results.trx" \
+          --logger "console;verbosity=detailed" \
+          --results-directory ./TestResults
+
+    - name: Upload Test Results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: golden-set-test-results
+        path: ./TestResults/
+        retention-days: 30
+
+    - name: Test Report
+      uses: dorny/test-reporter@v1
+      if: always()
+      with:
+        name: Golden Set Tests Report
+        path: ./TestResults/*.trx
+        reporter: dotnet-trx
+        fail-on-error: true
+
+  extraction-quality:
+    name: Check Extraction Quality
+    runs-on: ubuntu-latest
+    needs: golden-set
+    
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '10.0.x'
+        dotnet-quality: 'preview'
+
+    - name: Restore and Build
+      run: |
+        dotnet restore
+        dotnet build --configuration Release
+
+    - name: Run Quality Metrics Tests
+      run: |
+        dotnet test tests/Cookbook.Platform.Orchestrator.Tests \
+          --no-build \
+          --configuration Release \
+          --filter "FullyQualifiedName~GoldenSetTests" \
+          --filter "FullyQualifiedName~Quality" \
+          --logger "console;verbosity=detailed"

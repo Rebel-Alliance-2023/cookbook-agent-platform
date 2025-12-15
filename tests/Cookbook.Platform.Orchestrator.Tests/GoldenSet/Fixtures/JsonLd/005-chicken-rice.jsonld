@@ -1,0 +1,68 @@
+{
+  "name": "One-Pot Chicken and Rice",
+  "description": "Easy weeknight dinner with tender chicken and fluffy rice cooked together in one pot. Minimal cleanup and maximum flavor!",
+  "prepTime": "PT10M",
+  "cookTime": "PT35M",
+  "totalTime": "PT45M",
+  "recipeYield": "6 servings",
+  "recipeCategory": "Main Course",
+  "recipeCuisine": "American",
+  "keywords": ["one-pot", "chicken", "rice", "easy dinner", "weeknight meal"],
+  "author": {
+    "@type": "Person",
+    "name": "Chef John"
+  },
+  "nutrition": {
+    "@type": "NutritionInformation",
+    "servingSize": "1 serving",
+    "calories": "380 calories",
+    "fatContent": "12g",
+    "carbohydrateContent": "35g",
+    "proteinContent": "32g"
+  },
+  "recipeIngredient": [
+    "4 bone-in chicken thighs",
+    "2 tablespoons olive oil",
+    "1 cup long-grain white rice",
+    "1 onion, diced",
+    "3 cloves garlic, minced",
+    "2 cups chicken broth",
+    "1 cup frozen peas",
+    "1 teaspoon paprika",
+    "1/2 teaspoon dried thyme",
+    "Salt and pepper to taste",
+    "Fresh parsley for garnish"
+  ],
+  "recipeInstructions": [
+    {
+      "@type": "HowToStep",
+      "text": "Season chicken thighs generously with salt, pepper, and paprika."
+    },
+    {
+      "@type": "HowToStep",
+      "text": "Heat olive oil in a large Dutch oven over medium-high heat. Brown chicken on both sides, about 4 minutes per side. Remove and set aside."
+    },
+    {
+      "@type": "HowToStep",
+      "text": "Add onion to the pot and cook until softened, about 3 minutes. Add garlic and thyme, cook for 1 minute."
+    },
+    {
+      "@type": "HowToStep",
+      "text": "Add rice and stir to coat with the oil. Pour in chicken broth and bring to a boil."
+    },
+    {
+      "@type": "HowToStep",
+      "text": "Nestle the chicken thighs on top of the rice. Reduce heat to low, cover, and simmer for 25-30 minutes."
+    },
+    {
+      "@type": "HowToStep",
+      "text": "Add frozen peas in the last 5 minutes of cooking."
+    },
+    {
+      "@type": "HowToStep",
+      "text": "Let rest for 5 minutes before serving. Garnish with fresh parsley."
+    }
+  ],
+  "@context": "https://schema.org",
+  "@type": "Recipe"
+}

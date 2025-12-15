@@ -1,0 +1,112 @@
+{
+  "version": "1.0",
+  "description": "Golden Set Recipe Fixtures for Ingest Agent Testing",
+  "created": "2025-12-15",
+  "fixtures": {
+    "jsonld": [
+      {
+        "id": "001-chocolate-chip-cookies",
+        "name": "Classic Chocolate Chip Cookies",
+        "source": "Example Recipes",
+        "extractionMethod": "JsonLd",
+        "features": ["ingredients", "instructions", "nutrition", "times", "servings"],
+        "inputFile": "JsonLd/001-chocolate-chip-cookies.jsonld",
+        "expectedFile": "JsonLd/001-chocolate-chip-cookies.expected.json"
+      },
+      {
+        "id": "002-tuscan-chicken",
+        "name": "Creamy Garlic Tuscan Chicken",
+        "source": "Example Recipes",
+        "extractionMethod": "JsonLd",
+        "features": ["ingredients", "instructions", "nutrition", "times", "servings", "author"],
+        "inputFile": "JsonLd/002-tuscan-chicken.jsonld",
+        "expectedFile": "JsonLd/002-tuscan-chicken.expected.json"
+      },
+      {
+        "id": "003-banana-bread",
+        "name": "Classic Banana Bread",
+        "source": "Example Recipes",
+        "extractionMethod": "JsonLd",
+        "features": ["ingredients", "instructions", "nutrition", "times", "servings"],
+        "inputFile": "JsonLd/003-banana-bread.jsonld",
+        "expectedFile": "JsonLd/003-banana-bread.expected.json"
+      },
+      {
+        "id": "004-beef-tacos",
+        "name": "Homemade Beef Tacos",
+        "source": "Example Recipes",
+        "extractionMethod": "JsonLd",
+        "features": ["ingredients", "instructions", "nutrition", "times", "servings"],
+        "inputFile": "JsonLd/004-beef-tacos.jsonld",
+        "expectedFile": "JsonLd/004-beef-tacos.expected.json"
+      },
+      {
+        "id": "005-chicken-rice",
+        "name": "One-Pot Chicken and Rice",
+        "source": "Example Recipes",
+        "extractionMethod": "JsonLd",
+        "features": ["ingredients", "instructions", "nutrition", "times", "servings", "author"],
+        "inputFile": "JsonLd/005-chicken-rice.jsonld",
+        "expectedFile": "JsonLd/005-chicken-rice.expected.json"
+      }
+    ],
+    "plaintext": [
+      {
+        "id": "001-apple-pie",
+        "name": "Grandma's Apple Pie",
+        "source": "Grandma's Kitchen Blog",
+        "extractionMethod": "Llm",
+        "features": ["ingredients", "instructions", "times", "servings", "ingredient-sections"],
+        "inputFile": "PlainText/001-apple-pie.txt",
+        "expectedFile": "PlainText/001-apple-pie.expected.json"
+      },
+      {
+        "id": "002-homemade-pasta",
+        "name": "Best Ever Homemade Pasta",
+        "source": "Unknown",
+        "extractionMethod": "Llm",
+        "features": ["ingredients", "instructions", "times", "servings"],
+        "inputFile": "PlainText/002-homemade-pasta.txt",
+        "expectedFile": null,
+        "notes": "No expected file - used for testing LLM extraction only"
+      },
+      {
+        "id": "003-overnight-oats",
+        "name": "Easy Overnight Oats",
+        "source": "Unknown",
+        "extractionMethod": "Llm",
+        "features": ["ingredients", "instructions", "times", "servings", "nutrition", "optional-toppings"],
+        "inputFile": "PlainText/003-overnight-oats.txt",
+        "expectedFile": null,
+        "notes": "No expected file - used for testing LLM extraction only"
+      },
+      {
+        "id": "004-butter-chicken",
+        "name": "Restaurant-Style Butter Chicken",
+        "source": "Unknown",
+        "extractionMethod": "Llm",
+        "features": ["ingredients", "instructions", "times", "servings", "ingredient-sections", "chef-notes"],
+        "inputFile": "PlainText/004-butter-chicken.txt",
+        "expectedFile": null,
+        "notes": "Complex recipe with sections - used for testing LLM extraction only"
+      },
+      {
+        "id": "005-pizza-dough",
+        "name": "Simple Homemade Pizza Dough",
+        "source": "Unknown",
+        "extractionMethod": "Llm",
+        "features": ["ingredients", "instructions", "times", "servings", "variations"],
+        "inputFile": "PlainText/005-pizza-dough.txt",
+        "expectedFile": null,
+        "notes": "Includes variations - used for testing LLM extraction only"
+      }
+    ]
+  },
+  "metadata": {
+    "totalFixtures": 10,
+    "jsonLdFixtures": 5,
+    "plaintextFixtures": 5,
+    "cuisines": ["American", "Italian", "Mexican", "Indian"],
+    "categories": ["Dessert", "Main Course", "Breakfast", "Baking"]
+  }
+}

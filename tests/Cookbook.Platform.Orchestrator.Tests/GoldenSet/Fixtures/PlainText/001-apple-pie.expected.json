@@ -1,0 +1,47 @@
+{
+  "name": "Grandma's Apple Pie",
+  "description": "This is my grandmother's famous apple pie recipe that's been passed down through generations. It's the perfect dessert for fall gatherings and holiday dinners.",
+  "prepTimeMinutes": 30,
+  "cookTimeMinutes": 50,
+  "totalTimeMinutes": 80,
+  "servings": 8,
+  "servingUnit": "slices",
+  "cuisine": "American",
+  "category": "Dessert",
+  "difficulty": "Medium",
+  "tags": ["apple pie", "pie", "dessert", "baking", "traditional"],
+  "author": "Grandma's Kitchen Blog",
+  "source": {
+    "url": "https://grandmas-kitchen.com/apple-pie",
+    "siteName": "Grandma's Kitchen Blog",
+    "extractionMethod": "Llm"
+  },
+  "ingredients": [
+    { "name": "all-purpose flour", "quantity": 2.5, "unit": "cups", "raw": "2 1/2 cups all-purpose flour", "section": "Crust" },
+    { "name": "salt", "quantity": 1, "unit": "teaspoon", "raw": "1 teaspoon salt", "section": "Crust" },
+    { "name": "cold butter, cubed", "quantity": 1, "unit": "cup", "raw": "1 cup cold butter, cubed", "section": "Crust" },
+    { "name": "ice water", "quantity": 7, "unit": "tablespoons", "raw": "6-8 tablespoons ice water", "section": "Crust" },
+    { "name": "Granny Smith apples, peeled and sliced", "quantity": 6, "unit": "medium", "raw": "6-7 medium Granny Smith apples, peeled and sliced", "section": "Filling" },
+    { "name": "sugar", "quantity": 0.75, "unit": "cup", "raw": "3/4 cup sugar", "section": "Filling" },
+    { "name": "all-purpose flour", "quantity": 2, "unit": "tablespoons", "raw": "2 tablespoons all-purpose flour", "section": "Filling" },
+    { "name": "ground cinnamon", "quantity": 1, "unit": "teaspoon", "raw": "1 teaspoon ground cinnamon", "section": "Filling" },
+    { "name": "ground nutmeg", "quantity": 0.25, "unit": "teaspoon", "raw": "1/4 teaspoon ground nutmeg", "section": "Filling" },
+    { "name": "salt", "quantity": 0.25, "unit": "teaspoon", "raw": "1/4 teaspoon salt", "section": "Filling" },
+    { "name": "butter, cut into small pieces", "quantity": 2, "unit": "tablespoons", "raw": "2 tablespoons butter, cut into small pieces", "section": "Filling" },
+    { "name": "egg, beaten", "quantity": 1, "unit": "", "raw": "1 egg, beaten (for egg wash)", "section": "Filling" },
+    { "name": "coarse sugar", "quantity": 1, "unit": "tablespoon", "raw": "1 tablespoon coarse sugar for topping", "section": "Filling" }
+  ],
+  "instructions": [
+    "Make the crust by combining flour and salt in a large bowl. Cut in cold butter using a pastry blender until mixture resembles coarse crumbs.",
+    "Sprinkle ice water, 1 tablespoon at a time, tossing with a fork until dough comes together. Divide in half, form into disks, wrap in plastic, and refrigerate for at least 1 hour.",
+    "Preheat your oven to 375°F (190°C).",
+    "For the filling, combine sliced apples, sugar, flour, cinnamon, nutmeg, and salt in a large bowl. Toss until apples are evenly coated.",
+    "Roll out one disk of dough on a floured surface to about 12 inches. Transfer to a 9-inch pie dish, pressing gently into the bottom and sides.",
+    "Add apple filling, mounding slightly in the center. Dot with butter pieces.",
+    "Roll out second disk of dough and place over filling. Trim edges, then crimp to seal. Cut several slits in the top crust for steam to escape.",
+    "Brush top with beaten egg and sprinkle with coarse sugar.",
+    "Bake for 45-50 minutes until crust is golden brown and filling is bubbling. If edges brown too quickly, cover with foil.",
+    "Cool on a wire rack for at least 2 hours before slicing to allow filling to set."
+  ],
+  "tips": ["Use a variety of apples for the best flavor", "Serve warm with vanilla ice cream"]
+}

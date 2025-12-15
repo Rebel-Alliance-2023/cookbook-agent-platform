@@ -1,0 +1,161 @@
+name: Build and Test
+
+on:
+  push:
+    branches: [ main, develop, 'feature/**', 'Recipe-Ingest-Agent' ]
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:
+
+env:
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
+  DOTNET_NOLOGO: true
+  NUGET_PACKAGES: ${{ github.workspace }}/.nuget/packages
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '10.0.x'
+        dotnet-quality: 'preview'
+
+    - name: Cache NuGet packages
+      uses: actions/cache@v4
+      with:
+        path: ${{ env.NUGET_PACKAGES }}
+        key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+        restore-keys: |
+          ${{ runner.os }}-nuget-
+
+    - name: Restore dependencies
+      run: dotnet restore
+
+    - name: Build
+      run: dotnet build --no-restore --configuration Release
+
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: build-output
+        path: |
+          src/**/bin/Release/
+          tests/**/bin/Release/
+        retention-days: 1
+
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    needs: build
+    
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '10.0.x'
+        dotnet-quality: 'preview'
+
+    - name: Cache NuGet packages
+      uses: actions/cache@v4
+      with:
+        path: ${{ env.NUGET_PACKAGES }}
+        key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+        restore-keys: |
+          ${{ runner.os }}-nuget-
+
+    - name: Restore dependencies
+      run: dotnet restore
+
+    - name: Build
+      run: dotnet build --no-restore --configuration Release
+
+    - name: Run All Tests
+      run: |
+        dotnet test \
+          --no-build \
+          --configuration Release \
+          --logger "trx;LogFileName=test-results.trx" \
+          --logger "console;verbosity=normal" \
+          --results-directory ./TestResults \
+          --collect:"XPlat Code Coverage"
+
+    - name: Upload Test Results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: test-results
+        path: ./TestResults/
+        retention-days: 30
+
+    - name: Test Report
+      uses: dorny/test-reporter@v1
+      if: always()
+      with:
+        name: Test Results
+        path: ./TestResults/*.trx
+        reporter: dotnet-trx
+        fail-on-error: true
+
+    - name: Upload Coverage Reports
+      uses: codecov/codecov-action@v4
+      if: success()
+      with:
+        directory: ./TestResults/
+        fail_ci_if_error: false
+        verbose: true
+
+  golden-set:
+    name: Golden Set Tests
+    runs-on: ubuntu-latest
+    needs: build
+    
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '10.0.x'
+        dotnet-quality: 'preview'
+
+    - name: Cache NuGet packages
+      uses: actions/cache@v4
+      with:
+        path: ${{ env.NUGET_PACKAGES }}
+        key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+        restore-keys: |
+          ${{ runner.os }}-nuget-
+
+    - name: Restore and Build
+      run: |
+        dotnet restore
+        dotnet build --configuration Release
+
+    - name: Run Golden Set Tests
+      run: |
+        dotnet test tests/Cookbook.Platform.Orchestrator.Tests \
+          --no-build \
+          --configuration Release \
+          --filter "Category=GoldenSet" \
+          --logger "trx;LogFileName=golden-set-results.trx" \
+          --logger "console;verbosity=detailed" \
+          --results-directory ./TestResults
+
+    - name: Upload Golden Set Results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: golden-set-results
+        path: ./TestResults/
+        retention-days: 30
