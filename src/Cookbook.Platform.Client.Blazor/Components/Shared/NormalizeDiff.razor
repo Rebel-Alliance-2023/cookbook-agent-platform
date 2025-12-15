@@ -1,0 +1,534 @@
+@using Cookbook.Platform.Shared.Models.Ingest
+
+<div class="normalize-diff-container">
+    @if (PatchResponse == null || !PatchResponse.Patches.Any())
+    {
+        <div class="normalize-diff-empty">
+            <p>No normalization changes suggested.</p>
+        </div>
+    }
+    else
+    {
+        <!-- Summary Header -->
+        <div class="normalize-diff-header">
+            <h3>Suggested Improvements</h3>
+            <p class="normalize-summary">@PatchResponse.Summary</p>
+            
+            <div class="risk-summary">
+                @if (PatchResponse.LowRiskCount > 0)
+                {
+                    <span class="risk-badge risk-low">
+                        <span class="risk-icon">?</span>
+                        @PatchResponse.LowRiskCount Low Risk
+                    </span>
+                }
+                @if (PatchResponse.MediumRiskCount > 0)
+                {
+                    <span class="risk-badge risk-medium">
+                        <span class="risk-icon">?</span>
+                        @PatchResponse.MediumRiskCount Medium Risk
+                    </span>
+                }
+                @if (PatchResponse.HighRiskCount > 0)
+                {
+                    <span class="risk-badge risk-high">
+                        <span class="risk-icon">?</span>
+                        @PatchResponse.HighRiskCount High Risk
+                    </span>
+                }
+            </div>
+        </div>
+
+        <!-- Patch List -->
+        <div class="patch-list">
+            @for (int i = 0; i < PatchResponse.Patches.Count; i++)
+            {
+                var patch = PatchResponse.Patches[i];
+                var index = i;
+                <div class="patch-item @GetRiskClass(patch.RiskCategory) @(IsSelected(index) ? "selected" : "")">
+                    <div class="patch-header">
+                        <label class="patch-checkbox">
+                            <input type="checkbox" 
+                                   checked="@IsSelected(index)" 
+                                   @onchange="@(() => TogglePatchSelection(index))" />
+                            <span class="checkmark"></span>
+                        </label>
+                        
+                        <div class="patch-info">
+                            <span class="patch-path">@patch.Path</span>
+                            <span class="patch-operation">@patch.Op</span>
+                        </div>
+                        
+                        <span class="risk-indicator @GetRiskClass(patch.RiskCategory)">
+                            @GetRiskIcon(patch.RiskCategory)
+                            @patch.RiskCategory
+                        </span>
+                    </div>
+                    
+                    <div class="patch-reason">
+                        @patch.Reason
+                    </div>
+                    
+                    <!-- Before/After Values -->
+                    <div class="patch-diff">
+                        @if (patch.OriginalValue != null)
+                        {
+                            <div class="diff-before">
+                                <span class="diff-label">Before:</span>
+                                <code class="diff-value">@FormatValue(patch.OriginalValue)</code>
+                            </div>
+                        }
+                        <div class="diff-after">
+                            <span class="diff-label">After:</span>
+                            <code class="diff-value">@FormatValue(patch.Value)</code>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="normalize-actions">
+            <div class="selection-info">
+                @if (SelectedIndices.Count > 0)
+                {
+                    <span>@SelectedIndices.Count of @PatchResponse.Patches.Count patches selected</span>
+                }
+                else
+                {
+                    <span>Select patches to apply</span>
+                }
+            </div>
+            
+            <div class="action-buttons">
+                <button class="qg-btn qg-btn-secondary" 
+                        @onclick="SelectAllLowRisk"
+                        disabled="@IsLoading">
+                    Select Low Risk Only
+                </button>
+                
+                <button class="qg-btn qg-btn-secondary" 
+                        @onclick="SelectAll"
+                        disabled="@IsLoading">
+                    Select All
+                </button>
+                
+                <button class="qg-btn qg-btn-secondary" 
+                        @onclick="ClearSelection"
+                        disabled="@IsLoading">
+                    Clear Selection
+                </button>
+            </div>
+            
+            <div class="primary-actions">
+                <button class="qg-btn qg-btn-danger" 
+                        @onclick="OnRejectClicked"
+                        disabled="@IsLoading">
+                    @if (IsLoading && isRejecting)
+                    {
+                        <span class="loading-spinner small"></span>
+                        <span>Rejecting...</span>
+                    }
+                    else
+                    {
+                        <span>Reject All Changes</span>
+                    }
+                </button>
+                
+                <button class="qg-btn qg-btn-primary" 
+                        @onclick="OnApplyClicked"
+                        disabled="@(IsLoading || SelectedIndices.Count == 0)">
+                    @if (IsLoading && !isRejecting)
+                    {
+                        <span class="loading-spinner small"></span>
+                        <span>Applying...</span>
+                    }
+                    else
+                    {
+                        <span>Apply Selected (@SelectedIndices.Count)</span>
+                    }
+                </button>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public NormalizePatchResponse? PatchResponse { get; set; }
+
+    [Parameter]
+    public string? TaskId { get; set; }
+
+    [Parameter]
+    public string? RecipeId { get; set; }
+
+    [Parameter]
+    public bool IsLoading { get; set; }
+
+    [Parameter]
+    public EventCallback<ApplyPatchEventArgs> OnApply { get; set; }
+
+    [Parameter]
+    public EventCallback OnReject { get; set; }
+
+    private HashSet<int> SelectedIndices { get; set; } = new();
+    private bool isRejecting = false;
+
+    protected override void OnParametersSet()
+    {
+        // Auto-select low-risk patches by default
+        if (PatchResponse?.Patches != null && SelectedIndices.Count == 0)
+        {
+            for (int i = 0; i < PatchResponse.Patches.Count; i++)
+            {
+                if (PatchResponse.Patches[i].RiskCategory == NormalizePatchRiskCategory.Low)
+                {
+                    SelectedIndices.Add(i);
+                }
+            }
+        }
+    }
+
+    private bool IsSelected(int index) => SelectedIndices.Contains(index);
+
+    private void TogglePatchSelection(int index)
+    {
+        if (SelectedIndices.Contains(index))
+        {
+            SelectedIndices.Remove(index);
+        }
+        else
+        {
+            SelectedIndices.Add(index);
+        }
+    }
+
+    private void SelectAll()
+    {
+        if (PatchResponse?.Patches == null) return;
+        
+        SelectedIndices.Clear();
+        for (int i = 0; i < PatchResponse.Patches.Count; i++)
+        {
+            SelectedIndices.Add(i);
+        }
+    }
+
+    private void SelectAllLowRisk()
+    {
+        if (PatchResponse?.Patches == null) return;
+        
+        SelectedIndices.Clear();
+        for (int i = 0; i < PatchResponse.Patches.Count; i++)
+        {
+            if (PatchResponse.Patches[i].RiskCategory == NormalizePatchRiskCategory.Low)
+            {
+                SelectedIndices.Add(i);
+            }
+        }
+    }
+
+    private void ClearSelection()
+    {
+        SelectedIndices.Clear();
+    }
+
+    private async Task OnApplyClicked()
+    {
+        if (OnApply.HasDelegate)
+        {
+            isRejecting = false;
+            await OnApply.InvokeAsync(new ApplyPatchEventArgs
+            {
+                TaskId = TaskId ?? "",
+                RecipeId = RecipeId ?? "",
+                SelectedIndices = SelectedIndices.ToList()
+            });
+        }
+    }
+
+    private async Task OnRejectClicked()
+    {
+        if (OnReject.HasDelegate)
+        {
+            isRejecting = true;
+            await OnReject.InvokeAsync();
+        }
+    }
+
+    private string GetRiskClass(NormalizePatchRiskCategory risk) => risk switch
+    {
+        NormalizePatchRiskCategory.Low => "risk-low",
+        NormalizePatchRiskCategory.Medium => "risk-medium",
+        NormalizePatchRiskCategory.High => "risk-high",
+        _ => ""
+    };
+
+    private string GetRiskIcon(NormalizePatchRiskCategory risk) => risk switch
+    {
+        NormalizePatchRiskCategory.Low => "?",
+        NormalizePatchRiskCategory.Medium => "?",
+        NormalizePatchRiskCategory.High => "?",
+        _ => ""
+    };
+
+    private string FormatValue(object? value)
+    {
+        if (value == null) return "(null)";
+        
+        var str = value.ToString();
+        if (str == null) return "(null)";
+        
+        // Truncate long values
+        if (str.Length > 200)
+        {
+            return str.Substring(0, 200) + "...";
+        }
+        
+        return str;
+    }
+}
+
+<style>
+    .normalize-diff-container {
+        margin-top: 1.5rem;
+    }
+
+    .normalize-diff-empty {
+        text-align: center;
+        padding: 2rem;
+        color: var(--text-muted);
+    }
+
+    .normalize-diff-header {
+        margin-bottom: 1.5rem;
+    }
+
+    .normalize-diff-header h3 {
+        margin: 0 0 0.5rem 0;
+        color: var(--text-primary);
+    }
+
+    .normalize-summary {
+        color: var(--text-secondary);
+        margin-bottom: 1rem;
+    }
+
+    .risk-summary {
+        display: flex;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+    }
+
+    .risk-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.375rem;
+        padding: 0.375rem 0.75rem;
+        border-radius: 1rem;
+        font-size: 0.875rem;
+        font-weight: 500;
+    }
+
+    .risk-badge.risk-low {
+        background: rgba(34, 197, 94, 0.15);
+        color: #22c55e;
+    }
+
+    .risk-badge.risk-medium {
+        background: rgba(234, 179, 8, 0.15);
+        color: #eab308;
+    }
+
+    .risk-badge.risk-high {
+        background: rgba(239, 68, 68, 0.15);
+        color: #ef4444;
+    }
+
+    .patch-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .patch-item {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 0.5rem;
+        padding: 1rem;
+        transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .patch-item:hover {
+        border-color: var(--border-hover);
+    }
+
+    .patch-item.selected {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 1px var(--primary);
+    }
+
+    .patch-item.risk-low {
+        border-left: 3px solid #22c55e;
+    }
+
+    .patch-item.risk-medium {
+        border-left: 3px solid #eab308;
+    }
+
+    .patch-item.risk-high {
+        border-left: 3px solid #ef4444;
+    }
+
+    .patch-header {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .patch-checkbox {
+        position: relative;
+        cursor: pointer;
+    }
+
+    .patch-checkbox input {
+        width: 1.125rem;
+        height: 1.125rem;
+        cursor: pointer;
+    }
+
+    .patch-info {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .patch-path {
+        font-family: 'SF Mono', 'Fira Code', monospace;
+        font-size: 0.875rem;
+        color: var(--text-primary);
+        font-weight: 500;
+    }
+
+    .patch-operation {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        padding: 0.125rem 0.375rem;
+        background: var(--bg-secondary);
+        border-radius: 0.25rem;
+        color: var(--text-muted);
+    }
+
+    .risk-indicator {
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+        font-size: 0.75rem;
+        font-weight: 500;
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.25rem;
+    }
+
+    .risk-indicator.risk-low {
+        color: #22c55e;
+    }
+
+    .risk-indicator.risk-medium {
+        color: #eab308;
+    }
+
+    .risk-indicator.risk-high {
+        color: #ef4444;
+    }
+
+    .patch-reason {
+        font-size: 0.875rem;
+        color: var(--text-secondary);
+        margin-bottom: 0.75rem;
+        padding-left: 2rem;
+    }
+
+    .patch-diff {
+        background: var(--bg-secondary);
+        border-radius: 0.375rem;
+        padding: 0.75rem;
+        margin-left: 2rem;
+        font-size: 0.8125rem;
+    }
+
+    .diff-before, .diff-after {
+        display: flex;
+        gap: 0.5rem;
+        align-items: flex-start;
+    }
+
+    .diff-before {
+        margin-bottom: 0.5rem;
+    }
+
+    .diff-before .diff-value {
+        color: #ef4444;
+        text-decoration: line-through;
+        opacity: 0.8;
+    }
+
+    .diff-after .diff-value {
+        color: #22c55e;
+    }
+
+    .diff-label {
+        font-weight: 500;
+        color: var(--text-muted);
+        min-width: 3.5rem;
+    }
+
+    .diff-value {
+        font-family: 'SF Mono', 'Fira Code', monospace;
+        word-break: break-word;
+    }
+
+    .normalize-actions {
+        margin-top: 1.5rem;
+        padding-top: 1rem;
+        border-top: 1px solid var(--border-color);
+    }
+
+    .selection-info {
+        text-align: center;
+        color: var(--text-muted);
+        font-size: 0.875rem;
+        margin-bottom: 1rem;
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 0.5rem;
+        justify-content: center;
+        margin-bottom: 1rem;
+    }
+
+    .primary-actions {
+        display: flex;
+        gap: 0.75rem;
+        justify-content: center;
+    }
+
+    .qg-btn-danger {
+        background: #ef4444;
+        color: white;
+        border: none;
+    }
+
+    .qg-btn-danger:hover:not(:disabled) {
+        background: #dc2626;
+    }
+
+    .loading-spinner.small {
+        width: 1rem;
+        height: 1rem;
+        border-width: 2px;
+    }
+</style>

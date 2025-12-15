@@ -177,6 +177,209 @@ public class IngestTaskEndpointTests
         Assert.True(string.IsNullOrWhiteSpace(payload.RecipeId));
     }
 
+    [Fact]
+    public void NormalizeMode_WithFocusAreas_SerializesCorrectly()
+    {
+        // Arrange
+        var payload = new IngestPayload
+        {
+            Mode = IngestMode.Normalize,
+            RecipeId = "recipe-abc-123",
+            NormalizeOptions = new NormalizeOptions
+            {
+                FocusAreas = ["capitalization", "units", "grammar"]
+            }
+        };
+
+        // Act
+        var json = JsonSerializer.Serialize(payload, JsonOptions);
+        var deserialized = JsonSerializer.Deserialize<IngestPayload>(json, JsonOptions);
+
+        // Assert
+        Assert.NotNull(deserialized);
+        Assert.Equal(IngestMode.Normalize, deserialized.Mode);
+        Assert.NotNull(deserialized.NormalizeOptions);
+        Assert.NotNull(deserialized.NormalizeOptions.FocusAreas);
+        Assert.Equal(3, deserialized.NormalizeOptions.FocusAreas.Count);
+        Assert.Contains("capitalization", deserialized.NormalizeOptions.FocusAreas);
+    }
+
+    [Fact]
+    public void NormalizeMode_WithAutoApplyLowRisk_SerializesCorrectly()
+    {
+        // Arrange
+        var payload = new IngestPayload
+        {
+            Mode = IngestMode.Normalize,
+            RecipeId = "recipe-abc-123",
+            NormalizeOptions = new NormalizeOptions
+            {
+                AutoApplyLowRisk = true,
+                MaxRiskLevel = NormalizePatchRiskCategory.Medium
+            }
+        };
+
+        // Act
+        var json = JsonSerializer.Serialize(payload, JsonOptions);
+        var deserialized = JsonSerializer.Deserialize<IngestPayload>(json, JsonOptions);
+
+        // Assert
+        Assert.NotNull(deserialized);
+        Assert.NotNull(deserialized.NormalizeOptions);
+        Assert.True(deserialized.NormalizeOptions.AutoApplyLowRisk);
+        Assert.Equal(NormalizePatchRiskCategory.Medium, deserialized.NormalizeOptions.MaxRiskLevel);
+    }
+
+    [Fact]
+    public void NormalizeMode_WithNormalizePromptId_SerializesCorrectly()
+    {
+        // Arrange
+        var payload = new IngestPayload
+        {
+            Mode = IngestMode.Normalize,
+            RecipeId = "recipe-abc-123",
+            PromptSelection = new PromptSelection
+            {
+                NormalizePromptId = "ingest.normalize.v2"
+            }
+        };
+
+        // Act
+        var json = JsonSerializer.Serialize(payload, JsonOptions);
+        var deserialized = JsonSerializer.Deserialize<IngestPayload>(json, JsonOptions);
+
+        // Assert
+        Assert.NotNull(deserialized);
+        Assert.NotNull(deserialized.PromptSelection);
+        Assert.Equal("ingest.normalize.v2", deserialized.PromptSelection.NormalizePromptId);
+    }
+
+    [Fact]
+    public void NormalizeMode_BuildsMetadata_CorrectlyIncludesRecipeId()
+    {
+        // Arrange
+        var payload = new IngestPayload
+        {
+            Mode = IngestMode.Normalize,
+            RecipeId = "recipe-xyz-789"
+        };
+
+        // Act - simulate metadata building (same logic as TaskEndpoints.BuildIngestMetadata)
+        var metadata = BuildTestMetadata(payload);
+
+        // Assert
+        Assert.Equal("Normalize", metadata["ingestMode"]);
+        Assert.Equal("recipe-xyz-789", metadata["recipeId"]);
+    }
+
+    [Fact]
+    public void NormalizeMode_BuildsMetadata_IncludesNormalizePromptId()
+    {
+        // Arrange
+        var payload = new IngestPayload
+        {
+            Mode = IngestMode.Normalize,
+            RecipeId = "recipe-xyz-789",
+            PromptSelection = new PromptSelection
+            {
+                NormalizePromptId = "ingest.normalize.v1"
+            }
+        };
+
+        // Act - simulate metadata building
+        var metadata = BuildTestMetadata(payload);
+
+        // Assert
+        Assert.Equal("Normalize", metadata["ingestMode"]);
+        Assert.Contains("promptId:normalize", metadata.Keys);
+        Assert.Equal("ingest.normalize.v1", metadata["promptId:normalize"]);
+    }
+
+    [Fact]
+    public void NormalizeMode_ValidateIngestPayload_ReturnsNull_WhenValid()
+    {
+        // Arrange
+        var payload = new IngestPayload
+        {
+            Mode = IngestMode.Normalize,
+            RecipeId = "recipe-valid-id"
+        };
+
+        // Act - simulate validation (same logic as TaskEndpoints.ValidateIngestPayload)
+        var validationError = ValidateIngestPayloadTest(payload);
+
+        // Assert
+        Assert.Null(validationError);
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("   ")]
+    public void NormalizeMode_ValidateIngestPayload_ReturnsError_WhenRecipeIdMissing(string? recipeId)
+    {
+        // Arrange
+        var payload = new IngestPayload
+        {
+            Mode = IngestMode.Normalize,
+            RecipeId = recipeId
+        };
+
+        // Act - simulate validation
+        var validationError = ValidateIngestPayloadTest(payload);
+
+        // Assert
+        Assert.NotNull(validationError);
+        Assert.Equal("MISSING_RECIPE_ID", validationError.Code);
+    }
+
+    [Fact]
+    public void NormalizeMode_DefaultNormalizeOptions_HasCorrectDefaults()
+    {
+        // Arrange
+        var options = new NormalizeOptions();
+
+        // Assert
+        Assert.Null(options.FocusAreas);
+        Assert.False(options.AutoApplyLowRisk);
+        Assert.Equal(NormalizePatchRiskCategory.High, options.MaxRiskLevel);
+    }
+
+    [Fact]
+    public void NormalizeMode_FullPayload_SerializesRoundTrip()
+    {
+        // Arrange
+        var payload = new IngestPayload
+        {
+            Mode = IngestMode.Normalize,
+            RecipeId = "recipe-full-test",
+            NormalizeOptions = new NormalizeOptions
+            {
+                FocusAreas = ["capitalization", "units"],
+                AutoApplyLowRisk = true,
+                MaxRiskLevel = NormalizePatchRiskCategory.Low
+            },
+            PromptSelection = new PromptSelection
+            {
+                NormalizePromptId = "custom.normalize.prompt"
+            }
+        };
+
+        // Act
+        var json = JsonSerializer.Serialize(payload, JsonOptions);
+        var deserialized = JsonSerializer.Deserialize<IngestPayload>(json, JsonOptions);
+
+        // Assert
+        Assert.NotNull(deserialized);
+        Assert.Equal(IngestMode.Normalize, deserialized.Mode);
+        Assert.Equal("recipe-full-test", deserialized.RecipeId);
+        Assert.NotNull(deserialized.NormalizeOptions);
+        Assert.Equal(2, deserialized.NormalizeOptions.FocusAreas!.Count);
+        Assert.True(deserialized.NormalizeOptions.AutoApplyLowRisk);
+        Assert.Equal(NormalizePatchRiskCategory.Low, deserialized.NormalizeOptions.MaxRiskLevel);
+        Assert.Equal("custom.normalize.prompt", deserialized.PromptSelection?.NormalizePromptId);
+    }
+
     #endregion
 
     #region ThreadId Generation Tests
@@ -615,6 +818,46 @@ public class IngestTaskEndpointTests
 
         return metadata;
     }
+
+    /// <summary>
+    /// Simulates the validation logic from TaskEndpoints.ValidateIngestPayload.
+    /// </summary>
+    private static ValidationError? ValidateIngestPayloadTest(IngestPayload payload)
+    {
+        return payload.Mode switch
+        {
+            IngestMode.Url when string.IsNullOrWhiteSpace(payload.Url) =>
+                new ValidationError("MISSING_URL", "URL is required when mode is 'Url'"),
+                
+            IngestMode.Url when !IsValidUrl(payload.Url) =>
+                new ValidationError("INVALID_URL", "URL must be a valid HTTP or HTTPS URL"),
+                
+            IngestMode.Query when string.IsNullOrWhiteSpace(payload.Query) =>
+                new ValidationError("MISSING_QUERY", "Query is required when mode is 'Query'"),
+                
+            IngestMode.Normalize when string.IsNullOrWhiteSpace(payload.RecipeId) =>
+                new ValidationError("MISSING_RECIPE_ID", "RecipeId is required when mode is 'Normalize'"),
+                
+            _ => null
+        };
+    }
+
+    /// <summary>
+    /// Validates that a URL is a proper HTTP/HTTPS URL.
+    /// </summary>
+    private static bool IsValidUrl(string? url)
+    {
+        if (string.IsNullOrWhiteSpace(url))
+            return false;
+            
+        return Uri.TryCreate(url, UriKind.Absolute, out var uri) 
+            && (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps);
+    }
+
+    /// <summary>
+    /// Simple validation error record for testing.
+    /// </summary>
+    private record ValidationError(string Code, string Message);
 
     #endregion
 }

@@ -2,6 +2,7 @@ using Cookbook.Platform.Gateway;
 using Cookbook.Platform.Gateway.Endpoints;
 using Cookbook.Platform.Gateway.Services;
 using Cookbook.Platform.Infrastructure;
+using Cookbook.Platform.Orchestrator.Services.Ingest;
 using Cookbook.Platform.Shared.Configuration;
 using Cookbook.Platform.Storage;
 
@@ -32,9 +33,13 @@ builder.Services.AddBlobStorage(builder.Configuration);
 // Add search providers
 builder.Services.AddSearchProviders(builder.Configuration);
 
+// Add Orchestrator services needed by Gateway
+builder.Services.AddSingleton<INormalizeService, NormalizeService>();
+
 // Add Gateway services
 builder.Services.AddScoped<IRecipeImportService, RecipeImportService>();
 builder.Services.AddScoped<ITaskRejectService, TaskRejectService>();
+builder.Services.AddScoped<IPatchApplicationService, PatchApplicationService>();
 
 // Add CORS for Blazor client
 builder.Services.AddCors(options =>

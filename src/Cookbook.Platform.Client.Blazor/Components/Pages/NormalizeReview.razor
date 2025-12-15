@@ -1,0 +1,303 @@
+@page "/ingest/normalize/{TaskId}"
+@using System.Text.Json
+@using global::Cookbook.Platform.Shared.Models
+@using global::Cookbook.Platform.Shared.Models.Ingest
+@using global::Cookbook.Platform.Client.Blazor.Components.Shared
+@inject ApiClientService ApiClient
+@inject NavigationManager Navigation
+@inject ILogger<NormalizeReview> Logger
+@rendermode InteractiveServer
+
+<PageTitle>Review Normalization</PageTitle>
+
+<header class="qg-page-header">
+    <h1 class="qg-page-title">Review Normalization</h1>
+    <p class="qg-page-subtitle">
+        Review and apply suggested improvements to your recipe
+    </p>
+</header>
+
+@if (isLoading)
+{
+    <div class="loading-container">
+        <div class="loading-spinner large"></div>
+        <p>Loading normalization results...</p>
+    </div>
+}
+else if (!string.IsNullOrEmpty(errorMessage))
+{
+    <div class="qg-card error-card">
+        <div class="error-content">
+            <h3>Error</h3>
+            <p>@errorMessage</p>
+            <button class="qg-btn qg-btn-primary" @onclick="GoBack">
+                Go Back
+            </button>
+        </div>
+    </div>
+}
+else if (draft != null)
+{
+    <div class="normalize-layout">
+        <div class="qg-card">
+            <div class="recipe-header">
+                <h2>@draft.Recipe.Name</h2>
+                @if (!string.IsNullOrEmpty(recipeId))
+                {
+                    <span class="recipe-id">ID: @recipeId</span>
+                }
+            </div>
+            
+            @if (draft.NormalizePatchResponse != null)
+            {
+                <NormalizeDiff 
+                    PatchResponse="@draft.NormalizePatchResponse"
+                    TaskId="@TaskId"
+                    RecipeId="@recipeId"
+                    IsLoading="@isApplying"
+                    OnApply="@HandleApply"
+                    OnReject="@HandleReject" />
+            }
+            else
+            {
+                <div class="no-patches">
+                    <p>No normalization suggestions were generated for this recipe.</p>
+                    <button class="qg-btn qg-btn-secondary" @onclick="GoBack">
+                        Go Back
+                    </button>
+                </div>
+            }
+        </div>
+        
+        @if (!string.IsNullOrEmpty(successMessage))
+        {
+            <div class="success-banner">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                    <polyline points="22 4 12 14.01 9 11.01"/>
+                </svg>
+                <span>@successMessage</span>
+                <a href="/recipes/@recipeId" class="qg-btn qg-btn-sm qg-btn-primary">View Recipe</a>
+            </div>
+        }
+    </div>
+}
+
+<style>
+    .loading-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 4rem;
+        gap: 1rem;
+    }
+
+    .loading-spinner {
+        display: inline-block;
+        width: 16px;
+        height: 16px;
+        border: 2px solid currentColor;
+        border-right-color: transparent;
+        border-radius: 50%;
+        animation: spin 0.75s linear infinite;
+    }
+
+    .loading-spinner.large {
+        width: 3rem;
+        height: 3rem;
+        border-width: 3px;
+    }
+
+    @@keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+
+    .error-card {
+        max-width: 500px;
+        margin: 2rem auto;
+        text-align: center;
+        padding: 2rem;
+    }
+
+    .normalize-layout {
+        max-width: 900px;
+        margin: 0 auto;
+    }
+
+    .recipe-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid var(--border-color, #e5e7eb);
+    }
+
+    .recipe-header h2 {
+        margin: 0;
+    }
+
+    .recipe-id {
+        font-size: 0.875rem;
+        color: var(--text-muted, #6b7280);
+        font-family: 'SF Mono', monospace;
+    }
+
+    .no-patches {
+        text-align: center;
+        padding: 2rem;
+        color: var(--text-muted, #6b7280);
+    }
+
+    .success-banner {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 1rem;
+        background: #dcfce7;
+        border: 1px solid #86efac;
+        border-radius: 0.5rem;
+        color: #166534;
+        margin-top: 1rem;
+    }
+
+    .success-banner svg {
+        flex-shrink: 0;
+    }
+
+    .success-banner span {
+        flex: 1;
+    }
+</style>
+
+@code {
+    [Parameter]
+    public string? TaskId { get; set; }
+
+    private RecipeDraft? draft;
+    private string? recipeId;
+    private bool isLoading = true;
+    private bool isApplying;
+    private string? errorMessage;
+    private string? successMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadDraft();
+    }
+
+    private async Task LoadDraft()
+    {
+        if (string.IsNullOrEmpty(TaskId))
+        {
+            errorMessage = "No task ID provided.";
+            isLoading = false;
+            return;
+        }
+
+        try
+        {
+            draft = await ApiClient.GetRecipeDraftAsync(TaskId);
+            
+            if (draft == null)
+            {
+                errorMessage = "Normalization result not found. The task may still be processing.";
+            }
+            else
+            {
+                recipeId = draft.Recipe.Id;
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to load normalize draft for task {TaskId}", TaskId);
+            errorMessage = $"Failed to load normalization results: {ex.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task HandleApply(ApplyPatchEventArgs args)
+    {
+        if (string.IsNullOrEmpty(recipeId) || string.IsNullOrEmpty(TaskId))
+            return;
+
+        isApplying = true;
+        errorMessage = null;
+        StateHasChanged();
+
+        try
+        {
+            var result = await ApiClient.ApplyPatchAsync(recipeId, TaskId, args.SelectedIndices);
+            
+            if (result?.Success == true)
+            {
+                successMessage = $"Successfully applied {result.AppliedCount} changes to your recipe!";
+                Logger.LogInformation("Applied {Count} patches to recipe {RecipeId}", 
+                    result.AppliedCount, recipeId);
+            }
+            else
+            {
+                errorMessage = result?.Summary ?? "Failed to apply patches.";
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to apply patches for task {TaskId}", TaskId);
+            errorMessage = $"Failed to apply changes: {ex.Message}";
+        }
+        finally
+        {
+            isApplying = false;
+        }
+    }
+
+    private async Task HandleReject()
+    {
+        if (string.IsNullOrEmpty(recipeId) || string.IsNullOrEmpty(TaskId))
+            return;
+
+        isApplying = true;
+        errorMessage = null;
+        StateHasChanged();
+
+        try
+        {
+            var result = await ApiClient.RejectPatchAsync(recipeId, TaskId);
+            
+            if (result?.Success == true)
+            {
+                Logger.LogInformation("Rejected patches for recipe {RecipeId}", recipeId);
+                Navigation.NavigateTo($"/recipes/{recipeId}");
+            }
+            else
+            {
+                errorMessage = "Failed to reject changes.";
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to reject patches for task {TaskId}", TaskId);
+            errorMessage = $"Failed to reject changes: {ex.Message}";
+        }
+        finally
+        {
+            isApplying = false;
+        }
+    }
+
+    private void GoBack()
+    {
+        if (!string.IsNullOrEmpty(recipeId))
+        {
+            Navigation.NavigateTo($"/recipes/{recipeId}");
+        }
+        else
+        {
+            Navigation.NavigateTo("/recipes");
+        }
+    }
+}

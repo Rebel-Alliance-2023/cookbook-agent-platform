@@ -456,58 +456,58 @@
 
 | ID | Task | Size | Priority | Deps | Status |
 |----|------|------|----------|------|--------|
-| M5-001 | Create normalize prompt template | M | P0 | M0-039 | [ ] |
-| M5-002 | Create `NormalizePatchOperation` with riskCategory | S | P0 | - | [ ] |
-| M5-003 | Implement Normalize phase | L | P0 | M1-009 | [ ] |
-| M5-004 | Support trigger from ReviewReady | M | P0 | M5-003 | [ ] |
-| M5-005 | Support mode normalize with recipeId | M | P0 | M5-003 | [ ] |
-| M5-006 | Fetch stored recipe from Cosmos | M | P0 | M5-005 | [ ] |
-| M5-007 | Prompt LLM for JSON Patch | M | P0 | M5-003 | [ ] |
-| M5-008 | Parse and validate patch | M | P0 | M5-007 | [ ] |
-| M5-009 | Test-apply patch | M | P0 | M5-008 | [ ] |
-| M5-010 | Store normalize.patch.json | S | P0 | M5-008 | [ ] |
-| M5-011 | Store normalize.diff.md | M | P1 | M5-008 | [ ] |
-| M5-012 | Test: patch validation | M | P1 | M5-008 | [ ] |
+| M5-001 | Create normalize prompt template | M | P0 | M0-039 | [x] |
+| M5-002 | Create `NormalizePatchOperation` with riskCategory | S | P0 | - | [x] |
+| M5-003 | Implement Normalize phase | L | P0 | M1-009 | [x] |
+| M5-004 | Support trigger from ReviewReady | M | P0 | M5-003 | [x] |
+| M5-005 | Support mode normalize with recipeId | M | P0 | M5-003 | [x] |
+| M5-006 | Fetch stored recipe from Cosmos | M | P0 | M5-005 | [x] |
+| M5-007 | Prompt LLM for JSON Patch | M | P0 | M5-003 | [x] |
+| M5-008 | Parse and validate patch | M | P0 | M5-007 | [x] |
+| M5-009 | Test-apply patch | M | P0 | M5-008 | [x] |
+| M5-010 | Store normalize.patch.json | S | P0 | M5-008 | [x] |
+| M5-011 | Store normalize.diff.md | M | P1 | M5-008 | [x] |
+| M5-012 | Test: patch validation | M | P1 | M5-008 | [x] |
 
 ### Gateway
 
 | ID | Task | Size | Priority | Deps | Status |
 |----|------|------|----------|------|--------|
-| M5-013 | Extend payload for mode normalize | S | P0 | M1-001 | [ ] |
-| M5-014 | Handle normalize mode in task creation | M | P0 | M5-013 | [ ] |
-| M5-015 | Test: normalize task creation | M | P1 | M5-014 | [ ] |
+| M5-013 | Extend payload for mode normalize | S | P0 | M1-001 | [x] |
+| M5-014 | Handle normalize mode in task creation | M | P0 | M5-013 | [x] |
+| M5-015 | Test: normalize task creation | M | P1 | M5-014 | [x] |
 
 ### Apply Patch
 
 | ID | Task | Size | Priority | Deps | Status |
 |----|------|------|----------|------|--------|
-| M5-016 | Create `ApplyPatchRequest` model | S | P0 | M5-002 | [ ] |
-| M5-017 | Implement `POST /api/recipes/{id}/apply-patch` | L | P0 | M5-016 | [ ] |
-| M5-018 | Validate task and patch | M | P0 | M5-017 | [ ] |
-| M5-019 | Apply patch to recipe | M | P0 | M5-017 | [ ] |
-| M5-020 | Persist updated recipe | S | P0 | M5-019 | [ ] |
-| M5-021 | Update TaskState | S | P0 | M5-020 | [ ] |
-| M5-022 | Test: apply patch | M | P0 | M5-019 | [ ] |
+| M5-016 | Create `ApplyPatchRequest` model | S | P0 | M5-002 | [x] |
+| M5-017 | Implement `POST /api/recipes/{id}/apply-patch` | L | P0 | M5-016 | [x] |
+| M5-018 | Validate task and patch | M | P0 | M5-017 | [x] |
+| M5-019 | Apply patch to recipe | M | P0 | M5-017 | [x] |
+| M5-020 | Persist updated recipe | S | P0 | M5-019 | [x] |
+| M5-021 | Update TaskState | S | P0 | M5-020 | [x] |
+| M5-022 | Test: apply patch | M | P0 | M5-019 | [x] |
 
 ### Reject Patch
 
 | ID | Task | Size | Priority | Deps | Status |
 |----|------|------|----------|------|--------|
-| M5-023 | Implement reject-patch endpoint | M | P0 | - | [ ] |
-| M5-024 | Leave recipe unchanged | S | P0 | M5-023 | [ ] |
-| M5-025 | Test: reject leaves unchanged | M | P1 | M5-024 | [ ] |
+| M5-023 | Implement reject-patch endpoint | M | P0 | - | [x] |
+| M5-024 | Leave recipe unchanged | S | P0 | M5-023 | [x] |
+| M5-025 | Test: reject leaves unchanged | M | P1 | M5-024 | [x] |
 
 ### UI
 
 | ID | Task | Size | Priority | Deps | Status |
 |----|------|------|----------|------|--------|
-| M5-026 | Create NormalizeDiff component | L | P0 | M5-010 | [ ] |
-| M5-027 | Display before/after values | M | P0 | M5-026 | [ ] |
-| M5-028 | Color-code by risk category | S | P1 | M5-027 | [ ] |
-| M5-029 | Add Apply Patch button | M | P0 | M5-026, M5-017 | [ ] |
-| M5-030 | Add Reject Patch button | M | P0 | M5-026, M5-023 | [ ] |
-| M5-031 | Add Normalize button to ReviewReady | S | P0 | M1-075, M5-003 | [ ] |
-| M5-032 | Add Normalize action to recipe view | S | P1 | M5-005 | [ ] |
+| M5-026 | Create NormalizeDiff component | L | P0 | M5-010 | [x] |
+| M5-027 | Display before/after values | M | P0 | M5-026 | [x] |
+| M5-028 | Color-code by risk category | S | P1 | M5-027 | [x] |
+| M5-029 | Add Apply Patch button | M | P0 | M5-026, M5-017 | [x] |
+| M5-030 | Add Reject Patch button | M | P0 | M5-026, M5-023 | [x] |
+| M5-031 | Add Normalize button to ReviewReady | S | P0 | M1-075, M5-003 | [x] |
+| M5-032 | Add Normalize action to recipe view | S | P1 | M5-005 | [x] |
 
 ---
 

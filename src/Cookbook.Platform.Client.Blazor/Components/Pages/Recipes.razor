@@ -1,5 +1,7 @@
 ﻿@page "/recipes"
 @inject ApiClientService ApiClient
+@inject NavigationManager Navigation
+@inject ILogger<Recipes> Logger
 @rendermode InteractiveServer
 
 <PageTitle>Recipes</PageTitle>
@@ -51,6 +53,22 @@ else if (recipes.Any())
                 </div>
                 <div class="recipe-card-footer">
                     <a href="/recipes/@recipe.Id" class="qg-btn qg-btn-sm qg-btn-primary">View Recipe</a>
+                    <button class="qg-btn qg-btn-sm qg-btn-accent" 
+                            @onclick="@(() => StartNormalize(recipe.Id))"
+                            disabled="@normalizingRecipeId.Contains(recipe.Id)">
+                        @if (normalizingRecipeId.Contains(recipe.Id))
+                        {
+                            <span class="loading-spinner small"></span>
+                        }
+                        else
+                        {
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                            </svg>
+                        }
+                        Normalize
+                    </button>
                 </div>
             </div>
         }
@@ -65,10 +83,49 @@ else
     </div>
 }
 
+<style>
+    .recipe-card-footer {
+        display: flex;
+        gap: 0.5rem;
+        padding: 0.75rem 1rem;
+        border-top: 1px solid var(--border-color, #e5e7eb);
+    }
+    
+    .qg-btn-accent {
+        background: linear-gradient(135deg, #8b5cf6, #6366f1);
+        color: white;
+        border: none;
+    }
+    
+    .qg-btn-accent:hover:not(:disabled) {
+        background: linear-gradient(135deg, #7c3aed, #4f46e5);
+    }
+    
+    .loading-spinner.small {
+        width: 12px;
+        height: 12px;
+        border-width: 2px;
+        margin-right: 0.25rem;
+    }
+    
+    .loading-spinner {
+        display: inline-block;
+        border: 2px solid currentColor;
+        border-right-color: transparent;
+        border-radius: 50%;
+        animation: spin 0.75s linear infinite;
+    }
+    
+    @@keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+</style>
+
 @code {
     private string searchQuery = "";
     private bool isLoading = true;
     private List<ApiClientService.RecipeListItem> recipes = new();
+    private HashSet<string> normalizingRecipeId = new();
 
     protected override async Task OnInitializedAsync()
     {
@@ -90,5 +147,33 @@ else
         }
 
         isLoading = false;
+    }
+
+    private async Task StartNormalize(string recipeId)
+    {
+        if (normalizingRecipeId.Contains(recipeId))
+            return;
+
+        normalizingRecipeId.Add(recipeId);
+        StateHasChanged();
+
+        try
+        {
+            var taskId = await ApiClient.CreateNormalizeTaskAsync(recipeId);
+            
+            if (!string.IsNullOrEmpty(taskId))
+            {
+                Logger.LogInformation("Created normalize task {TaskId} for recipe {RecipeId}", taskId, recipeId);
+                Navigation.NavigateTo($"/ingest/normalize/{taskId}");
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to start normalize for recipe {RecipeId}", recipeId);
+        }
+        finally
+        {
+            normalizingRecipeId.Remove(recipeId);
+        }
     }
 }

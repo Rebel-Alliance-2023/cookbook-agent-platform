@@ -402,6 +402,24 @@ else if (draft != null)
                         </div>
                     }
 
+                    <button class="qg-btn qg-btn-accent" 
+                            @onclick="StartNormalize"
+                            disabled="@(isCommitting || isTerminalState || isNormalizing)">
+                        @if (isNormalizing)
+                        {
+                            <span class="loading-spinner"></span>
+                            <span>Normalizing...</span>
+                        }
+                        else
+                        {
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                            </svg>
+                            <span>Normalize Recipe</span>
+                        }
+                    </button>
+
                     <button class="qg-btn qg-btn-secondary" 
                             @onclick="ShowRejectDialog"
                             disabled="@(isCommitting || isTerminalState)">
@@ -857,6 +875,18 @@ else if (draft != null)
         cursor: not-allowed;
     }
     
+    /* Accent button for normalize */
+    .qg-btn-accent {
+        background: linear-gradient(135deg, #8b5cf6, #6366f1);
+        color: white;
+        border: none;
+    }
+    
+    .qg-btn-accent:hover:not(:disabled) {
+        background: linear-gradient(135deg, #7c3aed, #4f46e5);
+        transform: translateY(-1px);
+    }
+    
     /* Similarity Card Styles */
     .similarity-card {
         padding: 1rem;
@@ -990,6 +1020,7 @@ else if (draft != null)
     private bool isLoading = true;
     private string? errorMessage;
     private bool isCommitting;
+    private bool isNormalizing;
     private bool showRejectDialog;
     private string? rejectReason;
     private string? successMessage;
@@ -1203,6 +1234,49 @@ else if (draft != null)
     private void HideRejectDialog()
     {
         showRejectDialog = false;
+    }
+
+    private async Task StartNormalize()
+    {
+        if (draft == null || isTerminalState)
+            return;
+
+        isNormalizing = true;
+        errorMessage = null;
+
+        try
+        {
+            // Create a normalize task for this recipe
+            var recipeId = draft.Recipe.Id;
+            if (string.IsNullOrEmpty(recipeId))
+            {
+                errorMessage = "Cannot normalize: recipe has no ID. Please commit the recipe first.";
+                return;
+            }
+
+            var normalizeTaskId = await ApiClient.CreateNormalizeTaskAsync(recipeId);
+            
+            if (!string.IsNullOrEmpty(normalizeTaskId))
+            {
+                Logger.LogInformation("Created normalize task {NormalizeTaskId} for recipe {RecipeId}", 
+                    normalizeTaskId, recipeId);
+                // Navigate to normalize review page
+                Navigation.NavigateTo($"/ingest/normalize/{normalizeTaskId}");
+            }
+            else
+            {
+                errorMessage = "Failed to start normalization. Please try again.";
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to start normalize for task {TaskId}", TaskId);
+            errorMessage = $"Failed to start normalization: {ex.Message}";
+        }
+        finally
+        {
+            isNormalizing = false;
+        }
     }
 
     private string GetTerminalStateClass() => taskStatus switch

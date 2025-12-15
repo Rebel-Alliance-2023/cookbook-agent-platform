@@ -229,6 +229,83 @@ public class ApiClientService
         return response.IsSuccessStatusCode;
     }
 
+    /// <summary>
+    /// Creates a normalize task for an existing recipe.
+    /// </summary>
+    public async Task<string?> CreateNormalizeTaskAsync(string recipeId, IReadOnlyList<string>? focusAreas = null)
+    {
+        var client = CreateClient();
+        var request = new
+        {
+            AgentType = "Ingest",
+            Payload = new
+            {
+                Mode = "Normalize",
+                RecipeId = recipeId,
+                NormalizeOptions = focusAreas != null ? new { FocusAreas = focusAreas } : null
+            }
+        };
+
+        var response = await client.PostAsJsonAsync("/api/tasks/ingest", request);
+        
+        if (response.IsSuccessStatusCode)
+        {
+            var result = await response.Content.ReadFromJsonAsync<CreateIngestTaskResponse>();
+            _logger.LogInformation("Created normalize task {TaskId} for recipe {RecipeId}", result?.TaskId, recipeId);
+            return result?.TaskId;
+        }
+
+        _logger.LogError("Failed to create normalize task for recipe {RecipeId}: {StatusCode}", 
+            recipeId, response.StatusCode);
+        return null;
+    }
+
+    /// <summary>
+    /// Applies patches to a recipe.
+    /// </summary>
+    public async Task<ApplyPatchResponse?> ApplyPatchAsync(string recipeId, string taskId, IReadOnlyList<int>? patchIndices = null)
+    {
+        var client = CreateClient();
+        var request = new
+        {
+            TaskId = taskId,
+            PatchIndices = patchIndices
+        };
+
+        var response = await client.PostAsJsonAsync($"/api/recipes/{recipeId}/apply-patch", request);
+        
+        if (response.IsSuccessStatusCode)
+        {
+            return await response.Content.ReadFromJsonAsync<ApplyPatchResponse>();
+        }
+
+        _logger.LogError("Failed to apply patch for recipe {RecipeId}: {StatusCode}", recipeId, response.StatusCode);
+        return null;
+    }
+
+    /// <summary>
+    /// Rejects patches for a recipe.
+    /// </summary>
+    public async Task<RejectPatchResponse?> RejectPatchAsync(string recipeId, string taskId, string? reason = null)
+    {
+        var client = CreateClient();
+        var request = new
+        {
+            TaskId = taskId,
+            Reason = reason
+        };
+
+        var response = await client.PostAsJsonAsync($"/api/recipes/{recipeId}/reject-patch", request);
+        
+        if (response.IsSuccessStatusCode)
+        {
+            return await response.Content.ReadFromJsonAsync<RejectPatchResponse>();
+        }
+
+        _logger.LogError("Failed to reject patch for recipe {RecipeId}: {StatusCode}", recipeId, response.StatusCode);
+        return null;
+    }
+
     private record SessionResponse(string Id, string ThreadId);
     
     public record TaskResponse(string TaskId, string ThreadId, string AgentType);
