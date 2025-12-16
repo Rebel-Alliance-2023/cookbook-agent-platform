@@ -74,6 +74,13 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Adhoc Prompts", "Adhoc Prom
 		docs\Adhoc Prompts\prompts.md = docs\Adhoc Prompts\prompts.md
 	EndProjectSection
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Analysis", "Analysis", "{292C36C1-B75A-48DB-AABC-7855D3405135}"
+	ProjectSection(SolutionItems) = preProject
+		docs\Analysis\Feature-AI-Execution-Report-Time-Breakdown.md = docs\Analysis\Feature-AI-Execution-Report-Time-Breakdown.md
+		docs\Analysis\Feature-Non-AI-Execution-Report-Time-Breakdown..md = docs\Analysis\Feature-Non-AI-Execution-Report-Time-Breakdown..md
+		docs\Analysis\from_engineer_days_to_minutes_recipe_ingest_agent_case_study.md = docs\Analysis\from_engineer_days_to_minutes_recipe_ingest_agent_case_study.md
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -159,6 +166,7 @@ Global
 		{43090433-7C8A-20FF-7A27-C08168542C70} = {FC8E10D5-A509-444B-A6F5-7545545617D6}
 		{4E85EFF4-279E-4273-BD77-45A6BFBB45AF} = {46FBE4B8-E7A6-4B68-9FF7-0D6B5460E75E}
 		{C0C6D425-DD56-42B2-A671-AAC03D488C30} = {FC8E10D5-A509-444B-A6F5-7545545617D6}
+		{292C36C1-B75A-48DB-AABC-7855D3405135} = {F0DE8ED5-FA50-4166-A60C-3F8FBCE9C330}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {F51E3402-B90A-498D-8E70-584F914FD124}
