@@ -6,10 +6,16 @@ var builder = DistributedApplication.CreateBuilder(args);
 var openAiApiKey = builder.AddParameter("openai-api-key", secret: true);
 var anthropicApiKey = builder.AddParameter("anthropic-api-key", secret: true);
 
-// Infrastructure resources
+// ============================================
+// LAYER 1: Infrastructure Resources
+// These must be ready before any services start
+// ============================================
+
 var redis = builder.AddRedis("redis")
     .WithDataVolume("cookbook-redis-data");
 
+// Cosmos emulator can take 2-3 minutes to fully initialize on first run
+// Using persistent lifetime to preserve data and speed up subsequent starts
 var cosmos = builder.AddAzureCosmosDB("cosmos")
     .RunAsEmulator(emulator => emulator
         .WithDataVolume("cookbook-cosmos-data")
@@ -24,7 +30,11 @@ var storage = builder.AddAzureStorage("storage")
 
 var blobs = storage.AddBlobs("blobs");
 
-// MCP Server - Cookbook Tools (handles database seeding)
+// ============================================
+// LAYER 2: MCP Server (database seeding)
+// Waits for all infrastructure
+// ============================================
+
 var mcpServer = builder.AddProject<Projects.Cookbook_Platform_Mcp>("mcp-server")
     .WithReference(cosmosDb)
     .WithReference(blobs)
@@ -33,16 +43,18 @@ var mcpServer = builder.AddProject<Projects.Cookbook_Platform_Mcp>("mcp-server")
     .WaitFor(cosmos)
     .WaitFor(storage);
 
-// A2A Agents - wait for infrastructure (not MCP, since agents don't call MCP directly)
+// ============================================
+// LAYER 3: A2A Agents
+// Wait for MCP to seed database (cosmos already waited on by MCP)
+// ============================================
+
 var researchAgent = builder.AddProject<Projects.Cookbook_Platform_A2A_Research>("research-agent")
     .WithReference(redis)
     .WithReference(cosmosDb)
     .WithEnvironment("Llm__OpenAI__ApiKey", openAiApiKey)
     .WithEnvironment("Llm__Anthropic__ApiKey", anthropicApiKey)
     .WithExternalHttpEndpoints()
-    .WaitFor(redis)
-    .WaitFor(cosmos)
-    .WaitFor(mcpServer);  // Wait for MCP to seed the database
+    .WaitFor(mcpServer);  // MCP already waited for all infrastructure
 
 var analysisAgent = builder.AddProject<Projects.Cookbook_Platform_A2A_Analysis>("analysis-agent")
     .WithReference(redis)
@@ -51,12 +63,13 @@ var analysisAgent = builder.AddProject<Projects.Cookbook_Platform_A2A_Analysis>(
     .WithEnvironment("Llm__OpenAI__ApiKey", openAiApiKey)
     .WithEnvironment("Llm__Anthropic__ApiKey", anthropicApiKey)
     .WithExternalHttpEndpoints()
-    .WaitFor(redis)
-    .WaitFor(cosmos)
-    .WaitFor(storage)
-    .WaitFor(mcpServer);  // Wait for MCP to seed the database
+    .WaitFor(mcpServer);  // MCP already waited for all infrastructure
 
-// Orchestrator Service
+// ============================================
+// LAYER 4: Orchestrator Service
+// Waits for both A2A agents to be ready
+// ============================================
+
 var orchestrator = builder.AddProject<Projects.Cookbook_Platform_Orchestrator>("orchestrator")
     .WithReference(redis)
     .WithReference(cosmosDb)
@@ -68,16 +81,26 @@ var orchestrator = builder.AddProject<Projects.Cookbook_Platform_Orchestrator>("
     .WaitFor(researchAgent)
     .WaitFor(analysisAgent);
 
-// Gateway API
+// ============================================
+// LAYER 5: Gateway API
+// Waits for orchestrator to be fully ready
+// ============================================
+
 var gateway = builder.AddProject<Projects.Cookbook_Platform_Gateway>("gateway")
     .WithReference(redis)
     .WithReference(cosmosDb)
     .WithReference(blobs)
     .WithReference(orchestrator)
+    .WithEnvironment("Llm__OpenAI__ApiKey", openAiApiKey)
+    .WithEnvironment("Llm__Anthropic__ApiKey", anthropicApiKey)
     .WithExternalHttpEndpoints()
     .WaitFor(orchestrator);
 
-// Blazor Client
+// ============================================
+// LAYER 6: Blazor Client
+// Reference gateway for service discovery
+// ============================================
+
 builder.AddProject<Projects.Cookbook_Platform_Client_Blazor>("blazor-client")
     .WithReference(gateway)
     .WithExternalHttpEndpoints()

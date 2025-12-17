@@ -4,6 +4,7 @@ using Cookbook.Platform.Gateway.Services;
 using Cookbook.Platform.Infrastructure;
 using Cookbook.Platform.Orchestrator.Services.Ingest;
 using Cookbook.Platform.Shared.Configuration;
+using Cookbook.Platform.Shared.Prompts;
 using Cookbook.Platform.Storage;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -25,6 +26,7 @@ builder.Services.AddIngestOptions(builder.Configuration);
 
 // Add infrastructure services
 builder.Services.AddMessagingBus(builder.Configuration);
+builder.Services.AddLlmRouter(builder.Configuration);
 
 // Add storage services
 builder.Services.AddCosmosRepositories(builder.Configuration);
@@ -32,6 +34,9 @@ builder.Services.AddBlobStorage(builder.Configuration);
 
 // Add search providers
 builder.Services.AddSearchProviders(builder.Configuration);
+
+// Add prompt rendering
+builder.Services.AddSingleton<IPromptRenderer, ScribanPromptRenderer>();
 
 // Add Orchestrator services needed by Gateway
 builder.Services.AddSingleton<INormalizeService, NormalizeService>();

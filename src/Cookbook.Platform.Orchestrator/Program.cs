@@ -3,6 +3,7 @@ using Cookbook.Platform.Orchestrator.Metrics;
 using Cookbook.Platform.Orchestrator.Services;
 using Cookbook.Platform.Orchestrator.Services.Ingest;
 using Cookbook.Platform.Shared.Configuration;
+using Cookbook.Platform.Shared.Prompts;
 using Cookbook.Platform.Storage;
 using Microsoft.Extensions.Http.Resilience;
 
@@ -27,6 +28,9 @@ builder.Services.AddLlmRouter(builder.Configuration);
 // Add storage services
 builder.Services.AddCosmosRepositories(builder.Configuration);
 builder.Services.AddBlobStorage(builder.Configuration);
+
+// Add prompt rendering
+builder.Services.AddSingleton<IPromptRenderer, ScribanPromptRenderer>();
 
 // Add Ingest options
 builder.Services.Configure<IngestOptions>(
