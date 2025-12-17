@@ -106,4 +106,11 @@ builder.AddProject<Projects.Cookbook_Platform_Client_Blazor>("blazor-client")
     .WithExternalHttpEndpoints()
     .WaitFor(gateway);
 
+// ============================================
+// TEST: Blazor-Dummy (minimal Blazor for debugging)
+// ============================================
+
+builder.AddProject<Projects.Blazor_Dummy>("blazor-dummy")
+    .WithExternalHttpEndpoints();
+
 builder.Build().Run();

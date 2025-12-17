@@ -147,6 +147,8 @@ public record TaskState
 /// <summary>
 /// Task status enumeration.
 /// </summary>
+[System.Text.Json.Serialization.JsonConverter(typeof(JsonStringEnumConverter))]
+[Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
 public enum TaskStatus
 {
     Pending,

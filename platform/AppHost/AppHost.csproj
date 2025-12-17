@@ -25,6 +25,7 @@
     <ProjectReference Include="..\..\src\Cookbook.Platform.Mcp\Cookbook.Platform.Mcp.csproj" />
     <ProjectReference Include="..\..\src\Cookbook.Platform.A2A.Research\Cookbook.Platform.A2A.Research.csproj" />
     <ProjectReference Include="..\..\src\Cookbook.Platform.A2A.Analysis\Cookbook.Platform.A2A.Analysis.csproj" />
+    <ProjectReference Include="..\..\src\Blazor-Dummy\Blazor-Dummy.csproj" />
     <ProjectReference Include="..\ServiceDefaults\ServiceDefaults.csproj" IsAspireProjectResource="false" />
   </ItemGroup>
 

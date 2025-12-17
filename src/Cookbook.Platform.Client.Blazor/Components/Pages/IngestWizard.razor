@@ -503,10 +503,15 @@
         }
     }
 
-    private void HandleImportComplete(string taskId)
+    private async Task HandleImportComplete(string taskId)
     {
-        Logger.LogInformation("Import complete for task {TaskId}", taskId);
-        Navigation.NavigateTo($"/ingest/review/{taskId}");
+        Logger.LogInformation("Import complete for task {TaskId}, navigating to review page", taskId);
+        
+        // Small delay to ensure UI updates are visible before navigation
+        await Task.Delay(500);
+        
+        // Force navigation - use forceLoad to ensure the page loads
+        Navigation.NavigateTo($"/ingest/review/{taskId}", forceLoad: true);
     }
 
     private void HandleImportError(string error)

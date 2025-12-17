@@ -34,6 +34,14 @@ public static class TaskEndpoints
             .WithName("GetTaskState")
             .WithSummary("Gets the current state of a task");
 
+        group.MapGet("/{taskId}/draft", GetRecipeDraft)
+            .WithName("GetRecipeDraft")
+            .WithSummary("Gets the recipe draft for a task in ReviewReady state");
+
+        group.MapPost("/{taskId}/commit", CommitRecipeDraft)
+            .WithName("CommitRecipeDraft")
+            .WithSummary("Commits a recipe draft, adding it to the cookbook");
+
         group.MapPost("/{taskId}/cancel", CancelTask)
             .WithName("CancelTask")
             .WithSummary("Cancels a running task");
@@ -337,6 +345,110 @@ public static class TaskEndpoints
     {
         var artifacts = await artifactRepository.GetByTaskIdAsync(taskId, cancellationToken);
         return Results.Ok(artifacts);
+    }
+
+    /// <summary>
+    /// Gets the recipe draft for a task in ReviewReady state.
+    /// </summary>
+    private static async Task<IResult> GetRecipeDraft(
+        string taskId,
+        TaskRepository taskRepository,
+        IMessagingBus messagingBus,
+        CancellationToken cancellationToken)
+    {
+        // Get the task
+        var task = await taskRepository.GetByIdAsync(taskId, cancellationToken);
+        if (task == null)
+        {
+            return Results.NotFound(new
+            {
+                code = "TASK_NOT_FOUND",
+                message = $"Task {taskId} not found",
+                taskId = taskId
+            });
+        }
+
+        // Check task state
+        var taskState = await messagingBus.GetTaskStateAsync(taskId, cancellationToken);
+        
+        // Allow draft retrieval for ReviewReady, Committed, and Rejected states (for viewing history)
+        var allowedStatuses = new[] { Shared.Messaging.TaskStatus.ReviewReady, Shared.Messaging.TaskStatus.Committed, Shared.Messaging.TaskStatus.Rejected };
+        if (taskState == null || !allowedStatuses.Contains(taskState.Status))
+        {
+            var currentStatus = taskState?.Status.ToString() ?? "Unknown";
+            return Results.BadRequest(new
+            {
+                code = "INVALID_TASK_STATE",
+                message = $"Recipe draft is only available for tasks in ReviewReady, Committed, or Rejected state. Current state: {currentStatus}",
+                taskId = taskId,
+                taskStatus = currentStatus
+            });
+        }
+
+        // Parse the draft from task metadata
+        var draftJson = task.Metadata.GetValueOrDefault("recipeDraft") 
+                     ?? task.Metadata.GetValueOrDefault("draft.recipe.json");
+        
+        if (string.IsNullOrEmpty(draftJson))
+        {
+            return Results.NotFound(new
+            {
+                code = "DRAFT_NOT_FOUND",
+                message = "No recipe draft found for this task",
+                taskId = taskId
+            });
+        }
+
+        try
+        {
+            var draft = JsonSerializer.Deserialize<RecipeDraft>(draftJson, new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            });
+            
+            if (draft == null)
+            {
+                return Results.Problem(
+                    statusCode: 500,
+                    detail: "Failed to deserialize recipe draft");
+            }
+
+            return Results.Ok(draft);
+        }
+        catch (JsonException ex)
+        {
+            return Results.Problem(
+                statusCode: 500,
+                detail: $"Invalid JSON in recipe draft: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Commits a recipe draft, adding it to the cookbook.
+    /// </summary>
+    private static async Task<IResult> CommitRecipeDraft(
+        string taskId,
+        IRecipeImportService importService,
+        CancellationToken cancellationToken)
+    {
+        var request = new ImportRecipeRequest { TaskId = taskId };
+        var result = await importService.ImportAsync(request, cancellationToken);
+
+        return result.StatusCode switch
+        {
+            200 => Results.Ok(result.Response),
+            201 => Results.Created($"/api/recipes/{result.Response!.RecipeId}", result.Response),
+            400 => Results.BadRequest(result.Error),
+            404 => Results.NotFound(result.Error),
+            409 => Results.Conflict(result.Error),
+            410 => Results.Problem(
+                statusCode: 410,
+                title: "Gone",
+                detail: result.Error?.Message ?? "Draft has expired"),
+            _ => Results.Problem(
+                statusCode: result.StatusCode,
+                detail: result.Error?.Message ?? "An error occurred")
+        };
     }
 
     /// <summary>

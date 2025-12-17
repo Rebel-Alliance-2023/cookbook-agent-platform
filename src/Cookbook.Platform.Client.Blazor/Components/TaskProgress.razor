@@ -261,9 +261,22 @@
 
     private void HandleEvent(AgentEvent agentEvent)
     {
-        // Check if this event is for our task via metadata
-        if (agentEvent.Metadata.TryGetValue("taskId", out var eventTaskId) && eventTaskId != TaskId)
-            return;
+        // Parse payload to check taskId
+        try
+        {
+            using var doc = System.Text.Json.JsonDocument.Parse(agentEvent.Payload);
+            if (doc.RootElement.TryGetProperty("TaskId", out var taskIdProp) || 
+                doc.RootElement.TryGetProperty("taskId", out taskIdProp))
+            {
+                var eventTaskId = taskIdProp.GetString();
+                if (eventTaskId != TaskId)
+                    return;
+            }
+        }
+        catch
+        {
+            // If we can't parse, continue processing
+        }
 
         Logger.LogDebug("Received event for task {TaskId}: {EventType}", TaskId, agentEvent.EventType);
 
@@ -272,6 +285,7 @@
             switch (agentEvent.EventType)
             {
                 case "progress":
+                case "ingest.progress":
                     HandleProgressEvent(agentEvent);
                     break;
                 case "phase.started":
@@ -295,24 +309,38 @@
 
     private void HandleProgressEvent(AgentEvent e)
     {
-        if (e.Metadata.TryGetValue("progress", out var progressStr) && int.TryParse(progressStr, out var progress))
+        // Parse the payload JSON to get progress info
+        try
         {
-            overallProgress = progress;
-        }
+            using var doc = System.Text.Json.JsonDocument.Parse(e.Payload);
+            var root = doc.RootElement;
 
-        if (e.Metadata.TryGetValue("phase", out var phaseName))
-        {
-            SetPhaseActive(phaseName);
-            
-            if (e.Metadata.TryGetValue("phaseProgress", out var phaseProgressStr) && int.TryParse(phaseProgressStr, out var phaseProgress))
+            if (root.TryGetProperty("Progress", out var progressProp) || 
+                root.TryGetProperty("progress", out progressProp))
             {
-                UpdatePhaseProgress(phaseName, phaseProgress);
+                overallProgress = progressProp.GetInt32();
+            }
+
+            string? phaseName = null;
+            if (root.TryGetProperty("Phase", out var phaseProp) || 
+                root.TryGetProperty("phase", out phaseProp))
+            {
+                phaseName = phaseProp.GetString();
+                if (phaseName != null)
+                {
+                    SetPhaseActive(phaseName);
+                }
+            }
+
+            if (root.TryGetProperty("Message", out var messageProp) || 
+                root.TryGetProperty("message", out messageProp))
+            {
+                statusMessage = messageProp.GetString();
             }
         }
-
-        if (e.Metadata.TryGetValue("message", out var message))
+        catch (Exception ex)
         {
-            statusMessage = message;
+            Logger.LogWarning(ex, "Failed to parse progress event payload");
         }
     }
 
