@@ -61,13 +61,13 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Reports", "Reports", "{4E85EFF4-279E-4273-BD77-45A6BFBB45AF}"
 	ProjectSection(SolutionItems) = preProject
 		docs\Tasks\Reports\Milestone-0-execution-report.md = docs\Tasks\Reports\Milestone-0-execution-report.md
-		Milestone-1-execution-report Part 2.md = Milestone-1-execution-report Part 2.md
-		Milestone-1-execution-report.md = Milestone-1-execution-report.md
-		Milestone-2-execution-report.md = Milestone-2-execution-report.md
-		Milestone-3-execution-report.md = Milestone-3-execution-report.md
-		Milestone-4-execution-report.md = Milestone-4-execution-report.md
-		Milestone-5-execution-report.md = Milestone-5-execution-report.md
-		Milestone-CC-execution-report.md = Milestone-CC-execution-report.md
+		docs\Tasks\Reports\Milestone-1-execution-report Part 2.md = docs\Tasks\Reports\Milestone-1-execution-report Part 2.md
+		docs\Tasks\Reports\Milestone-1-execution-report.md = docs\Tasks\Reports\Milestone-1-execution-report.md
+		docs\Tasks\Reports\Milestone-2-execution-report.md = docs\Tasks\Reports\Milestone-2-execution-report.md
+		docs\Tasks\Reports\Milestone-3-execution-report.md = docs\Tasks\Reports\Milestone-3-execution-report.md
+		docs\Tasks\Reports\Milestone-4-execution-report.md = docs\Tasks\Reports\Milestone-4-execution-report.md
+		docs\Tasks\Reports\Milestone-5-execution-report.md = docs\Tasks\Reports\Milestone-5-execution-report.md
+		docs\Tasks\Reports\Milestone-CC-execution-report.md = docs\Tasks\Reports\Milestone-CC-execution-report.md
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cookbook.Platform.Orchestrator.Tests", "tests\Cookbook.Platform.Orchestrator.Tests\Cookbook.Platform.Orchestrator.Tests.csproj", "{9500580A-739D-298C-87B7-A9FE2499E9CC}"
