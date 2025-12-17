@@ -385,9 +385,14 @@ public static class TaskEndpoints
             });
         }
 
-        // Parse the draft from task metadata
+        // Parse the draft from task metadata or task state result
         var draftJson = task.Metadata.GetValueOrDefault("recipeDraft") 
                      ?? task.Metadata.GetValueOrDefault("draft.recipe.json");
+        
+        if (string.IsNullOrEmpty(draftJson) && !string.IsNullOrEmpty(taskState?.Result))
+        {
+            draftJson = taskState.Result;
+        }
         
         if (string.IsNullOrEmpty(draftJson))
         {

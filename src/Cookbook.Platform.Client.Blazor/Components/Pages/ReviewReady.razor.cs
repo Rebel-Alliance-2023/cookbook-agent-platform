@@ -40,6 +40,8 @@ public partial class ReviewReady
     private const int ErrorOverlapThreshold = 50;
     private const double WarningSimilarityThreshold = 0.5;
     private const double ErrorSimilarityThreshold = 0.7;
+    private const int DraftLoadMaxAttempts = 5;
+    private const int DraftLoadRetryDelayMs = 1000;
 
     protected override async Task OnInitializedAsync()
     {
@@ -57,24 +59,52 @@ public partial class ReviewReady
             return;
         }
 
-        try
+        errorMessage = null;
+
+        for (var attempt = 1; attempt <= DraftLoadMaxAttempts; attempt++)
         {
-            draft = await ApiClient.GetRecipeDraftAsync(TaskId);
-            
-            if (draft == null)
+            try
             {
-                errorMessage = "Recipe draft not found. The import may still be in progress.";
+                draft = await ApiClient.GetRecipeDraftAsync(TaskId);
+                
+                if (draft != null)
+                {
+                    break;
+                }
+
+                Logger.LogInformation(
+                    "Recipe draft not available yet for task {TaskId} (attempt {Attempt}/{MaxAttempts})",
+                    TaskId,
+                    attempt,
+                    DraftLoadMaxAttempts);
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError(ex,
+                    "Failed to load recipe draft for task {TaskId} (attempt {Attempt}/{MaxAttempts})",
+                    TaskId,
+                    attempt,
+                    DraftLoadMaxAttempts);
+
+                if (attempt == DraftLoadMaxAttempts)
+                {
+                    errorMessage = $"Failed to load recipe: {ex.Message}";
+                    break;
+                }
+            }
+
+            if (attempt < DraftLoadMaxAttempts)
+            {
+                await Task.Delay(DraftLoadRetryDelayMs);
             }
         }
-        catch (Exception ex)
+
+        if (draft == null && errorMessage == null)
         {
-            Logger.LogError(ex, "Failed to load recipe draft for task {TaskId}", TaskId);
-            errorMessage = $"Failed to load recipe: {ex.Message}";
+            errorMessage = "Recipe draft not found. The import may still be in progress.";
         }
-        finally
-        {
-            isLoading = false;
-        }
+
+        isLoading = false;
     }
 
     private async Task LoadTaskState()

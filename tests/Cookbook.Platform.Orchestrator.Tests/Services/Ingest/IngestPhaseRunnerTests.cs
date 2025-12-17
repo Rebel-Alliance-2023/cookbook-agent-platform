@@ -18,6 +18,9 @@ namespace Cookbook.Platform.Orchestrator.Tests.Services.Ingest;
 public class IngestPhaseRunnerTests
 {
     private readonly Mock<IMessagingBus> _messagingBusMock;
+    private readonly Mock<IFetchService> _fetchServiceMock;
+    private readonly Mock<ISanitizationService> _sanitizationServiceMock;
+    private readonly Mock<RecipeExtractionOrchestrator> _extractionOrchestratorMock;
     private readonly Mock<ISimilarityDetector> _similarityDetectorMock;
     private readonly Mock<IRepairParaphraseService> _repairServiceMock;
     private readonly Mock<INormalizeService> _normalizeServiceMock;
@@ -30,6 +33,19 @@ public class IngestPhaseRunnerTests
     public IngestPhaseRunnerTests()
     {
         _messagingBusMock = new Mock<IMessagingBus>();
+        _fetchServiceMock = new Mock<IFetchService>();
+        _sanitizationServiceMock = new Mock<ISanitizationService>();
+        
+        // Create mocks for extraction orchestrator dependencies
+        var jsonLdExtractorMock = new Mock<JsonLdRecipeExtractor>(MockBehavior.Loose, null!, null!);
+        var llmExtractorMock = new Mock<LlmRecipeExtractor>(MockBehavior.Loose, null!, null!, null!);
+        var extractionLoggerMock = new Mock<ILogger<RecipeExtractionOrchestrator>>();
+        _extractionOrchestratorMock = new Mock<RecipeExtractionOrchestrator>(
+            MockBehavior.Loose, 
+            jsonLdExtractorMock.Object, 
+            llmExtractorMock.Object, 
+            extractionLoggerMock.Object);
+        
         _similarityDetectorMock = new Mock<ISimilarityDetector>();
         _repairServiceMock = new Mock<IRepairParaphraseService>();
         _normalizeServiceMock = new Mock<INormalizeService>();
@@ -44,6 +60,9 @@ public class IngestPhaseRunnerTests
         _loggerMock = new Mock<ILogger<IngestPhaseRunner>>();
         _runner = new IngestPhaseRunner(
             _messagingBusMock.Object,
+            _fetchServiceMock.Object,
+            _sanitizationServiceMock.Object,
+            _extractionOrchestratorMock.Object,
             _similarityDetectorMock.Object,
             _repairServiceMock.Object,
             _normalizeServiceMock.Object,

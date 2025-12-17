@@ -363,35 +363,49 @@
 
     private async void HandleReviewReady(AgentEvent e)
     {
-        foreach (var phase in phases)
+        try
         {
-            phase.Status = PhaseStatus.Complete;
-        }
-        overallProgress = 100;
-        statusMessage = "Recipe ready for review!";
+            foreach (var phase in phases)
+            {
+                phase.Status = PhaseStatus.Complete;
+            }
+            overallProgress = 100;
+            statusMessage = "Recipe ready for review!";
 
-        await OnComplete.InvokeAsync(TaskId);
+            await OnComplete.InvokeAsync(TaskId);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error in HandleReviewReady for task {TaskId}", TaskId);
+        }
     }
 
     private async void HandleFailed(AgentEvent e)
     {
-        isFailed = true;
-        
-        if (e.Metadata.TryGetValue("error", out var error))
+        try
         {
-            errorMessage = error;
-        }
-        else
-        {
-            errorMessage = "An unexpected error occurred during import.";
-        }
+            isFailed = true;
+            
+            if (e.Metadata.TryGetValue("error", out var error))
+            {
+                errorMessage = error;
+            }
+            else
+            {
+                errorMessage = "An unexpected error occurred during import.";
+            }
 
-        if (e.Metadata.TryGetValue("errorCode", out var code))
-        {
-            errorCode = code;
-        }
+            if (e.Metadata.TryGetValue("errorCode", out var code))
+            {
+                errorCode = code;
+            }
 
-        await OnError.InvokeAsync(errorMessage);
+            await OnError.InvokeAsync(errorMessage);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error in HandleFailed for task {TaskId}", TaskId);
+        }
     }
 
     private void SetPhaseActive(string phaseName)

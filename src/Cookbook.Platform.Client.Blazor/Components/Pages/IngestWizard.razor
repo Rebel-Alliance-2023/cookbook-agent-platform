@@ -381,6 +381,8 @@
     {
         formModel.Mode = mode;
         errorMessage = null;
+        urlError = null;
+        queryError = null;
     }
 
     private void ValidateUrl()
@@ -455,6 +457,7 @@
             
             currentTaskId = response.TaskId;
             currentThreadId = response.ThreadId;
+            StateHasChanged();
 
             Logger.LogInformation("Created ingest task {TaskId} for thread {ThreadId}", 
                 currentTaskId, currentThreadId);
@@ -464,6 +467,8 @@
             Logger.LogError(ex, "Failed to create ingest task");
             errorMessage = $"Failed to start import: {ex.Message}";
             isSubmitting = false;
+            currentTaskId = null;
+            currentThreadId = null;
         }
     }
 
@@ -491,6 +496,7 @@
             
             currentTaskId = response.TaskId;
             currentThreadId = response.ThreadId;
+            StateHasChanged();
 
             Logger.LogInformation("Created search task {TaskId} for thread {ThreadId}", 
                 currentTaskId, currentThreadId);
@@ -500,18 +506,27 @@
             Logger.LogError(ex, "Failed to create search task");
             errorMessage = $"Failed to start search: {ex.Message}";
             isSubmitting = false;
+            currentTaskId = null;
+            currentThreadId = null;
         }
     }
 
     private async Task HandleImportComplete(string taskId)
     {
+        if (string.IsNullOrEmpty(taskId))
+        {
+            Logger.LogWarning("Received import completion without a valid task ID");
+            return;
+        }
+
         Logger.LogInformation("Import complete for task {TaskId}, navigating to review page", taskId);
         
-        // Small delay to ensure UI updates are visible before navigation
-        await Task.Delay(500);
-        
-        // Force navigation - use forceLoad to ensure the page loads
-        Navigation.NavigateTo($"/ingest/review/{taskId}", forceLoad: true);
+        isSubmitting = false;
+
+        await InvokeAsync(() =>
+        {
+            Navigation.NavigateTo($"/ingest/review/{taskId}", forceLoad: true);
+        });
     }
 
     private void HandleImportError(string error)

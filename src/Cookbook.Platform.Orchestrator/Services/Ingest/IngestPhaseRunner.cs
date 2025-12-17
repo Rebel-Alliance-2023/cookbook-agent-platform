@@ -174,6 +174,9 @@ public class IngestPipelineContext
 public class IngestPhaseRunner
 {
     private readonly IMessagingBus _messagingBus;
+    private readonly IFetchService _fetchService;
+    private readonly ISanitizationService _sanitizationService;
+    private readonly RecipeExtractionOrchestrator _extractionOrchestrator;
     private readonly ISimilarityDetector _similarityDetector;
     private readonly IRepairParaphraseService _repairService;
     private readonly INormalizeService _normalizeService;
@@ -184,6 +187,9 @@ public class IngestPhaseRunner
 
     public IngestPhaseRunner(
         IMessagingBus messagingBus,
+        IFetchService fetchService,
+        ISanitizationService sanitizationService,
+        RecipeExtractionOrchestrator extractionOrchestrator,
         ISimilarityDetector similarityDetector,
         IRepairParaphraseService repairService,
         INormalizeService normalizeService,
@@ -193,6 +199,9 @@ public class IngestPhaseRunner
         ILogger<IngestPhaseRunner> logger)
     {
         _messagingBus = messagingBus;
+        _fetchService = fetchService;
+        _sanitizationService = sanitizationService;
+        _extractionOrchestrator = extractionOrchestrator;
         _similarityDetector = similarityDetector;
         _repairService = repairService;
         _normalizeService = normalizeService;
@@ -330,13 +339,63 @@ public class IngestPhaseRunner
         await UpdateProgressAsync(context, IngestPhases.Fetch, 0, "Fetching URL content");
 
         // Validate we have a URL to fetch
-        if (context.Payload.Mode == IngestMode.Url && string.IsNullOrWhiteSpace(context.Payload.Url))
+        var url = context.Payload.Url;
+        if (context.Payload.Mode == IngestMode.Url && string.IsNullOrWhiteSpace(url))
         {
             throw new IngestPipelineException("URL is required for URL mode", "MISSING_URL", IngestPhases.Fetch);
         }
 
-        // TODO: Implement actual fetch logic with IFetchService
-        // For now, mark as placeholder
+        // Fetch the URL content
+        await UpdateProgressAsync(context, IngestPhases.Fetch, 5, $"Fetching {url}");
+        
+        var fetchResult = await _fetchService.FetchAsync(url!, context.CancellationToken);
+        
+        if (!fetchResult.Success)
+        {
+            _metrics.RecordPhaseFailure(IngestPhases.Fetch, fetchResult.ErrorCode ?? "FETCH_FAILED");
+            throw new IngestPipelineException(
+                fetchResult.Error ?? "Failed to fetch URL",
+                fetchResult.ErrorCode ?? "FETCH_FAILED",
+                IngestPhases.Fetch);
+        }
+
+        context.FetchedContent = fetchResult.Content;
+        context.ContentType = fetchResult.ContentType;
+        context.HttpStatusCode = fetchResult.StatusCode;
+
+        _logger.LogInformation("Fetched {Length} bytes from {Url}", 
+            fetchResult.Content?.Length ?? 0, url);
+
+        // Store raw HTML artifact
+        if (!string.IsNullOrEmpty(fetchResult.Content))
+        {
+            await UpdateProgressAsync(context, IngestPhases.Fetch, 10, "Storing raw content");
+            var rawArtifact = await _artifactStorage.StoreRawHtmlAsync(
+                context.Task.ThreadId,
+                context.Task.TaskId,
+                fetchResult.Content,
+                context.CancellationToken);
+            context.Artifacts.Add(rawArtifact);
+        }
+
+        // Sanitize HTML content
+        await UpdateProgressAsync(context, IngestPhases.Fetch, 12, "Sanitizing content");
+        
+        var sanitizedContent = _sanitizationService.Sanitize(fetchResult.Content ?? "", url);
+        context.SanitizedText = sanitizedContent.TextContent;
+        context.JsonLdRecipe = sanitizedContent.RecipeJsonLd;
+
+        _logger.LogInformation("Sanitized content: {Original} -> {Sanitized} chars, HasJsonLd: {HasJsonLd}",
+            sanitizedContent.OriginalLength, sanitizedContent.SanitizedLength, sanitizedContent.HasRecipeJsonLd);
+
+        // Store sanitized content artifact
+        var sanitizedArtifact = await _artifactStorage.StoreSanitizedContentAsync(
+            context.Task.ThreadId,
+            context.Task.TaskId,
+            sanitizedContent,
+            context.CancellationToken);
+        context.Artifacts.Add(sanitizedArtifact);
+
         await UpdateProgressAsync(context, IngestPhases.Fetch, IngestPhases.Weights.Fetch, "Fetch complete");
         
         _logger.LogInformation("Fetch phase completed for task {TaskId}", context.Task.TaskId);
@@ -352,9 +411,94 @@ public class IngestPhaseRunner
         var baseProgress = IngestPhases.Weights.Fetch;
         await UpdateProgressAsync(context, IngestPhases.Extract, baseProgress, "Extracting recipe data");
 
-        // TODO: Implement JSON-LD extraction and LLM fallback
-        // For now, mark as placeholder
+        // Verify we have content to extract from
+        if (string.IsNullOrWhiteSpace(context.SanitizedText) && string.IsNullOrWhiteSpace(context.JsonLdRecipe))
+        {
+            _metrics.RecordPhaseFailure(IngestPhases.Extract, "NO_CONTENT");
+            throw new IngestPipelineException(
+                "No content available for extraction",
+                "NO_CONTENT",
+                IngestPhases.Extract);
+        }
+
+        // Build sanitized content for extraction orchestrator
+        var sanitizedContent = new SanitizedContent
+        {
+            TextContent = context.SanitizedText ?? "",
+            RecipeJsonLd = context.JsonLdRecipe,
+            OriginalLength = context.FetchedContent?.Length ?? 0,
+            SanitizedLength = context.SanitizedText?.Length ?? 0
+        };
+
+        var extractionContext = new ExtractionContext
+        {
+            SourceUrl = context.Payload.Url,
+            TaskId = context.Task.TaskId,
+            ContentBudget = 60_000,
+            PromptOverride = context.Payload.PromptOverrides?.ExtractOverride
+        };
+
+        await UpdateProgressAsync(context, IngestPhases.Extract, baseProgress + 10, "Running recipe extraction");
+
+        // Call the extraction orchestrator (tries JSON-LD first, then LLM)
+        var extractionResult = await _extractionOrchestrator.ExtractAsync(
+            sanitizedContent,
+            extractionContext,
+            context.CancellationToken);
+
+        if (!extractionResult.Success || extractionResult.Recipe == null)
+        {
+            _metrics.RecordPhaseFailure(IngestPhases.Extract, extractionResult.ErrorCode ?? "EXTRACTION_FAILED");
+            throw new IngestPipelineException(
+                extractionResult.Error ?? "Failed to extract recipe from content",
+                extractionResult.ErrorCode ?? "EXTRACTION_FAILED",
+                IngestPhases.Extract);
+        }
+
+        context.ExtractionMethod = extractionResult.Method.ToString();
+
+        _logger.LogInformation("Extracted recipe '{Name}' using {Method} with confidence {Confidence:P0}",
+            extractionResult.Recipe.Name, extractionResult.Method, extractionResult.Confidence);
+
+        // Store extraction result artifact
+        await UpdateProgressAsync(context, IngestPhases.Extract, baseProgress + 25, "Storing extraction results");
         
+        var extractionArtifact = await _artifactStorage.StoreExtractionResultAsync(
+            context.Task.ThreadId,
+            context.Task.TaskId,
+            extractionResult,
+            context.CancellationToken);
+        context.Artifacts.Add(extractionArtifact);
+
+        // Store JSON-LD if used
+        if (extractionResult.Method == ExtractionMethod.JsonLd && !string.IsNullOrEmpty(extractionResult.RawJsonLd))
+        {
+            var jsonLdArtifact = await _artifactStorage.StoreJsonLdAsync(
+                context.Task.ThreadId,
+                context.Task.TaskId,
+                extractionResult.RawJsonLd,
+                context.CancellationToken);
+            context.Artifacts.Add(jsonLdArtifact);
+        }
+
+        // Build draft with extracted recipe
+        context.Draft = new RecipeDraft
+        {
+            Recipe = extractionResult.Recipe,
+            Source = extractionResult.Source ?? new RecipeSource
+            {
+                Url = context.Payload.Url ?? "",
+                UrlHash = Shared.Utilities.UrlHasher.ComputeHash(context.Payload.Url ?? ""),
+                RetrievedAt = DateTime.UtcNow,
+                ExtractionMethod = extractionResult.Method.ToString()
+            },
+            ValidationReport = new ValidationReport
+            {
+                Warnings = extractionResult.Warnings
+            },
+            Artifacts = context.Artifacts
+        };
+
         var finalProgress = baseProgress + IngestPhases.Weights.Extract;
         await UpdateProgressAsync(context, IngestPhases.Extract, finalProgress, "Extraction complete");
         
