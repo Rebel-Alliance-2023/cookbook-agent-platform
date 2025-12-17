@@ -80,6 +80,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Analysis", "Analysis", "{29
 		docs\Analysis\Feature-AI-Execution-Report-Time-Breakdown.md = docs\Analysis\Feature-AI-Execution-Report-Time-Breakdown.md
 		docs\Analysis\Feature-Non-AI-Execution-Report-Time-Breakdown..md = docs\Analysis\Feature-Non-AI-Execution-Report-Time-Breakdown..md
 		docs\Analysis\from_engineer_days_to_minutes_recipe_ingest_agent_case_study.md = docs\Analysis\from_engineer_days_to_minutes_recipe_ingest_agent_case_study.md
+		LLM-Touchpoints.md = LLM-Touchpoints.md
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Blazor-Dummy", "src\Blazor-Dummy\Blazor-Dummy.csproj", "{983BCFBC-CE55-470A-9C03-916277915ED8}"
