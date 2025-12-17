@@ -114,6 +114,26 @@ public class RepairParaphraseService : IRepairParaphraseService
             // Update the draft with the new similarity report
             repairedDraft = repairedDraft with { SimilarityReport = newSimilarityReport };
 
+            // If similarity is now acceptable, remove similarity validation errors/warnings
+            if (!stillViolates && repairedDraft.ValidationReport != null)
+            {
+                var cleanedErrors = repairedDraft.ValidationReport.Errors
+                    .Where(e => !e.Contains("similarity", StringComparison.OrdinalIgnoreCase))
+                    .ToList();
+                var cleanedWarnings = repairedDraft.ValidationReport.Warnings
+                    .Where(w => !w.Contains("similarity", StringComparison.OrdinalIgnoreCase))
+                    .ToList();
+
+                repairedDraft = repairedDraft with
+                {
+                    ValidationReport = repairedDraft.ValidationReport with
+                    {
+                        Errors = cleanedErrors,
+                        Warnings = cleanedWarnings
+                    }
+                };
+            }
+
             _logger.LogInformation(
                 "Repair complete. New similarity: {Overlap} overlap, {Similarity:P2}. Still violates: {StillViolates}",
                 newSimilarityReport.MaxContiguousTokenOverlap,

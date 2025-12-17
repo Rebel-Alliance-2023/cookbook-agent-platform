@@ -36,6 +36,14 @@ public partial class ReviewReady
     private bool repairAttempted;
     private bool repairSuccessful;
     
+    // Commit eligibility - simple flag that controls the Add to Cookbook button
+    private bool CanCommit => 
+        draft != null && 
+        !isCommitting && 
+        !isTerminalState && 
+        draft.ValidationReport.IsValid && 
+        !SimilarityBlocksCommit();
+    
     // Similarity thresholds (should match IngestGuardrailOptions)
     private const int WarningOverlapThreshold = 25;
     private const int ErrorOverlapThreshold = 50;

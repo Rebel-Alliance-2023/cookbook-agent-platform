@@ -367,7 +367,7 @@ else if (draft != null)
                 <div class="action-buttons">
                     <button class="qg-btn qg-btn-primary qg-btn-lg" 
                             @onclick="CommitRecipe"
-                            disabled="@(isCommitting || !draft.ValidationReport.IsValid || isTerminalState || SimilarityBlocksCommit())">
+                            disabled="@(!CanCommit)">
                         @if (isCommitting)
                         {
                             <span class="loading-spinner"></span>
