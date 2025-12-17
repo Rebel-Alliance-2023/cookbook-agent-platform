@@ -111,6 +111,9 @@ public class RepairParaphraseService : IRepairParaphraseService
 
             var stillViolates = newSimilarityReport.ViolatesPolicy;
 
+            // Update the draft with the new similarity report
+            repairedDraft = repairedDraft with { SimilarityReport = newSimilarityReport };
+
             _logger.LogInformation(
                 "Repair complete. New similarity: {Overlap} overlap, {Similarity:P2}. Still violates: {StillViolates}",
                 newSimilarityReport.MaxContiguousTokenOverlap,
@@ -272,6 +275,7 @@ Return ONLY a JSON object with the rephrased sections:
             var response = await _llmRouter.ChatAsync(new LlmRequest
             {
                 Messages = [new LlmMessage { Role = "user", Content = prompt }],
+                Provider = "OpenAI", // Explicitly use OpenAI for repair to avoid Anthropic model issues
                 MaxTokens = 2000,
                 Temperature = 0.7 // Slightly higher for creative rephrasing
             }, cancellationToken);

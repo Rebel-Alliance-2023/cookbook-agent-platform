@@ -52,6 +52,11 @@ public static class TaskEndpoints
             .WithDescription("Only tasks in ReviewReady state can be rejected. " +
                            "Rejected tasks cannot be committed. This operation is idempotent.");
 
+        group.MapPost("/{taskId}/repair", RepairRecipeDraft)
+            .WithName("RepairRecipeDraft")
+            .WithSummary("Paraphrases high-similarity content in a recipe draft")
+            .WithDescription("Uses LLM to rephrase description and instructions that have high verbatim similarity to the source.");
+
         group.MapGet("/{taskId}/artifacts", GetTaskArtifacts)
             .WithName("GetTaskArtifacts")
             .WithSummary("Gets artifacts produced by a task");
@@ -481,6 +486,37 @@ public static class TaskEndpoints
             _ => Results.Problem(
                 statusCode: result.StatusCode,
                 detail: result.Error?.Message ?? "An error occurred")
+        };
+    }
+
+    /// <summary>
+    /// Repairs a recipe draft by paraphrasing high-similarity content.
+    /// </summary>
+    private static async Task<IResult> RepairRecipeDraft(
+        string taskId,
+        IRecipeRepairService repairService,
+        CancellationToken cancellationToken)
+    {
+        var result = await repairService.RepairAsync(taskId, cancellationToken);
+
+        if (result.Success && result.RepairedDraft != null)
+        {
+            return Results.Ok(new
+            {
+                success = true,
+                draft = result.RepairedDraft,
+                similarityReport = result.NewSimilarityReport,
+                stillViolatesPolicy = result.StillViolatesPolicy
+            });
+        }
+
+        return result.StatusCode switch
+        {
+            400 => Results.BadRequest(new { code = result.ErrorCode, message = result.Error }),
+            404 => Results.NotFound(new { code = result.ErrorCode, message = result.Error }),
+            _ => Results.Problem(
+                statusCode: result.StatusCode,
+                detail: result.Error ?? "An error occurred")
         };
     }
 

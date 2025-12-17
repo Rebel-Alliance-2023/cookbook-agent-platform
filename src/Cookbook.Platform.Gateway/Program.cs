@@ -41,10 +41,17 @@ builder.Services.AddSingleton<IPromptRenderer, ScribanPromptRenderer>();
 // Add Orchestrator services needed by Gateway
 builder.Services.AddSingleton<INormalizeService, NormalizeService>();
 
+// Add Similarity detection for repair
+builder.Services.Configure<SimilarityOptions>(
+    builder.Configuration.GetSection("Ingest:Similarity"));
+builder.Services.AddSingleton<ISimilarityDetector, SimilarityDetector>();
+builder.Services.AddSingleton<IRepairParaphraseService, RepairParaphraseService>();
+
 // Add Gateway services
 builder.Services.AddScoped<IRecipeImportService, RecipeImportService>();
 builder.Services.AddScoped<ITaskRejectService, TaskRejectService>();
 builder.Services.AddScoped<IPatchApplicationService, PatchApplicationService>();
+builder.Services.AddScoped<IRecipeRepairService, RecipeRepairService>();
 
 // Add CORS for Blazor client
 builder.Services.AddCors(options =>

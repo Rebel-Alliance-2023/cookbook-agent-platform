@@ -2,6 +2,7 @@ using System.Net.Http.Json;
 using Cookbook.Platform.Shared.Models;
 using Cookbook.Platform.Shared.Models.Ingest;
 using Cookbook.Platform.Shared.Models.Ingest.Search;
+using System.Text.Json;
 
 namespace Cookbook.Platform.Client.Blazor.Services;
 
@@ -230,6 +231,26 @@ public class ApiClientService
     }
 
     /// <summary>
+    /// Repairs a recipe draft by paraphrasing high-similarity content.
+    /// </summary>
+    public async Task<RepairResult?> RepairRecipeDraftAsync(string taskId)
+    {
+        var client = CreateClient();
+        var response = await client.PostAsync($"/api/tasks/{taskId}/repair", null);
+        
+        if (response.IsSuccessStatusCode)
+        {
+            return await response.Content.ReadFromJsonAsync<RepairResult>(new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            });
+        }
+
+        _logger.LogError("Failed to repair recipe draft for task {TaskId}: {StatusCode}", taskId, response.StatusCode);
+        return null;
+    }
+
+    /// <summary>
     /// Creates a normalize task for an existing recipe.
     /// </summary>
     public async Task<string?> CreateNormalizeTaskAsync(string recipeId, IReadOnlyList<string>? focusAreas = null)
@@ -311,6 +332,8 @@ public class ApiClientService
     public record TaskResponse(string TaskId, string ThreadId, string AgentType);
     
     public record TaskStateResponse(string TaskId, string Status, int Progress, string? CurrentPhase);
+    
+    public record RepairResult(bool Success, RecipeDraft? Draft, SimilarityReport? SimilarityReport, bool StillViolatesPolicy);
     
     public record RecipeListItem(
         string Id, 

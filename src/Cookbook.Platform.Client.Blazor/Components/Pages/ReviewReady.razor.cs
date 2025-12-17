@@ -20,6 +20,7 @@ public partial class ReviewReady
     private string? errorMessage;
     private bool isCommitting;
     private bool isNormalizing;
+    private bool isRepairing;
     private bool showRejectDialog;
     private string? rejectReason;
     private string? successMessage;
@@ -263,6 +264,57 @@ public partial class ReviewReady
     private void HideRejectDialog()
     {
         showRejectDialog = false;
+    }
+
+    private async Task RepairContent()
+    {
+        if (draft == null || isTerminalState || string.IsNullOrEmpty(TaskId))
+            return;
+
+        isRepairing = true;
+        errorMessage = null;
+        successMessage = null;
+
+        try
+        {
+            var result = await ApiClient.RepairRecipeDraftAsync(TaskId);
+            
+            // Update draft if we got one back, regardless of whether it still violates policy
+            if (result != null && result.Draft != null)
+            {
+                Logger.LogInformation("Repair completed for task {TaskId}. Success: {Success}, Still violates: {StillViolates}", 
+                    TaskId, result.Success, result.StillViolatesPolicy);
+                
+                // Update the draft with the repaired version
+                draft = result.Draft;
+                repairAttempted = true;
+                repairSuccessful = !result.StillViolatesPolicy;
+                
+                if (result.StillViolatesPolicy)
+                {
+                    errorMessage = "Repair reduced similarity but content still exceeds policy thresholds. Consider manual editing.";
+                }
+                else
+                {
+                    successMessage = "Content successfully rephrased! You can now add to cookbook.";
+                }
+                
+                StateHasChanged();
+            }
+            else
+            {
+                errorMessage = "Failed to repair content. Please try again or consider manual editing.";
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to repair content for task {TaskId}", TaskId);
+            errorMessage = $"Failed to repair content: {ex.Message}";
+        }
+        finally
+        {
+            isRepairing = false;
+        }
     }
 
     private async Task StartNormalize()

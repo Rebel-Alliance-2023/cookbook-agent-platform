@@ -210,12 +210,12 @@ public partial class SimilarityDetector : ISimilarityDetector
             return 0.0;
 
         var intersection = sourceNgrams.Intersect(extractedNgrams).Count();
-        var union = sourceNgrams.Union(extractedNgrams).Count();
 
-        if (union == 0)
-            return 0.0;
-
-        return (double)intersection / union;
+        // Use containment (recall) instead of Jaccard for accurate verbatim detection.
+        // This measures: "What percentage of the extracted text's n-grams appear in the source?"
+        // This correctly detects when a short description is 100% copied from a large source document.
+        // Jaccard would incorrectly report low similarity because union >> intersection.
+        return (double)intersection / extractedNgrams.Count;
     }
 
     /// <summary>
